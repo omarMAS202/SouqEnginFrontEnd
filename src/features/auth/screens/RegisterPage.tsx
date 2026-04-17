@@ -7,35 +7,33 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
-import { useLanguage } from '@/features/localization'
-import { toast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useLanguage } from '@/features/localization'
+import { toast } from '@/hooks/useToast'
 import { cn } from '@/utils/cn'
 
 import { useAuth } from '../hooks/useAuth'
 import { type RegisterFormValues, registerSchema } from '../schemas/auth.schema'
 
 const requirements = [
-  { key: 'length', label: { en: 'At least 8 characters', ar: 'ثمانية أحرف على الأقل' } },
-  { key: 'uppercase', label: { en: 'One uppercase letter', ar: 'حرف كبير واحد' } },
-  { key: 'number', label: { en: 'One number', ar: 'رقم واحد' } },
+  { key: 'length', label: { en: 'At least 8 characters', ar: '8 أحرف على الأقل' } },
 ] as const
 
 const featureHighlights = [
   {
-    en: 'Feature-first dashboard ready for backend contracts',
-    ar: 'لوحة تحكم جاهزة لربط العقود الخلفية والميزات المتدرجة',
+    en: 'Public registration endpoint with email activation',
+    ar: 'تسجيل عام مع تفعيل الحساب عبر البريد الإلكتروني',
   },
   {
-    en: 'Arabic and English storefront support',
-    ar: 'دعم عربي وإنجليزي على مستوى واجهة المتجر',
+    en: 'Store owner role is sent explicitly to the backend',
+    ar: 'يتم إرسال دور صاحب المتجر بشكل صريح إلى الـ backend',
   },
   {
-    en: 'Clean architecture for team collaboration',
-    ar: 'هيكل واضح لتعاون الفريق وتوسيع المشروع',
+    en: 'The frontend does not fake auto-login after registration',
+    ar: 'الواجهة لا تفترض تسجيل الدخول تلقائيًا بعد التسجيل',
   },
 ] as const
 
@@ -49,8 +47,7 @@ export default function RegisterPage() {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      fullName: '',
-      storeName: '',
+      username: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -60,7 +57,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!isAuthenticated || !user) return
-    router.replace(user.role === 'admin' ? '/admin' : '/dashboard')
+    router.replace(user.role === 'super_admin' ? '/admin' : '/dashboard')
   }, [isAuthenticated, router, user])
 
   const passwordValue = form.watch('password')
@@ -69,8 +66,6 @@ export default function RegisterPage() {
   const passwordChecks = useMemo(
     () => ({
       length: passwordValue.length >= 8,
-      uppercase: /[A-Z]/.test(passwordValue),
-      number: /[0-9]/.test(passwordValue),
       match: passwordValue.length > 0 && passwordValue === confirmPasswordValue,
     }),
     [confirmPasswordValue, passwordValue],
@@ -78,25 +73,22 @@ export default function RegisterPage() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      const registeredUser = await register({
-        fullName: values.fullName,
-        storeName: values.storeName,
+      const result = await register({
+        username: values.username,
         email: values.email,
         password: values.password,
       })
+
       toast({
         title: language === 'ar' ? 'تم إنشاء الحساب' : 'Account created',
-        description:
-          language === 'ar'
-            ? `مرحباً بك في SOUQ ENGINE يا ${registeredUser.fullName}.`
-            : `Welcome to SOUQ ENGINE, ${registeredUser.fullName}.`,
+        description: result.message,
       })
-      router.push('/dashboard')
+
+      router.push('/login')
     } catch (error) {
       toast({
         title: language === 'ar' ? 'تعذر إنشاء الحساب' : 'Unable to create account',
-        description:
-          error instanceof Error ? error.message : language === 'ar' ? 'يرجى المحاولة مرة أخرى.' : 'Please try again.',
+        description: error instanceof Error ? error.message : language === 'ar' ? 'يرجى المحاولة مرة أخرى.' : 'Please try again.',
         variant: 'destructive',
       })
     }
@@ -119,8 +111,8 @@ export default function RegisterPage() {
           <div className="space-y-8">
             <h1 className="text-4xl font-bold leading-tight">
               {language === 'ar'
-                ? 'ابدأ تجهيز متجرك كواجهة احترافية قابلة للتكامل'
-                : 'Start with a professional storefront shell that is ready to integrate'}
+                ? 'أنشئ حساب صاحب متجر ثم فعّل البريد الإلكتروني قبل أول تسجيل دخول'
+                : 'Create a store-owner account, then activate it by email before your first sign-in'}
             </h1>
 
             <div className="space-y-4">
@@ -137,8 +129,8 @@ export default function RegisterPage() {
 
           <p className="text-sm text-white/80">
             {language === 'ar'
-              ? 'هذا التدفق منظم ليستبدل لاحقاً بسهولة بمصادقة حقيقية من جهة الخادم.'
-              : 'This registration flow is structured to swap cleanly into real backend authentication later.'}
+              ? 'هذه الخطوة ترسل طلب التسجيل فقط، وبعدها يؤكد المستخدم الحساب من رسالة التفعيل.'
+              : 'This step only creates the account request. The user confirms the account from the activation email.'}
           </p>
         </div>
       </div>
@@ -166,14 +158,18 @@ export default function RegisterPage() {
           <div className="w-full max-w-md space-y-6">
             <div className={cn('space-y-2', direction === 'rtl' && 'text-right')}>
               <h2 className="text-2xl font-bold text-foreground">{t('auth.registerTitle')}</h2>
-              <p className="text-muted-foreground">{t('auth.registerSubtitle')}</p>
+              <p className="text-muted-foreground">
+                {language === 'ar'
+                  ? 'سيرسل النظام رسالة تفعيل إلى البريد الإلكتروني بعد نجاح التسجيل.'
+                  : 'The system will send an activation email after successful registration.'}
+              </p>
             </div>
 
             <form onSubmit={onSubmit} className="space-y-5">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName" className={cn(direction === 'rtl' && 'block text-right')}>
-                    {t('auth.fullName')}
+                  <Label htmlFor="username" className={cn(direction === 'rtl' && 'block text-right')}>
+                    {language === 'ar' ? 'اسم المستخدم' : 'Username'}
                   </Label>
                   <div className="relative">
                     <User
@@ -183,35 +179,13 @@ export default function RegisterPage() {
                       )}
                     />
                     <Input
-                      id="fullName"
+                      id="username"
                       className={cn('h-12', direction === 'rtl' ? 'pr-10 text-right' : 'pl-10')}
-                      {...form.register('fullName')}
+                      {...form.register('username')}
                     />
                   </div>
-                  {form.formState.errors.fullName && (
-                    <p className="text-sm text-destructive">{form.formState.errors.fullName.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="storeName" className={cn(direction === 'rtl' && 'block text-right')}>
-                    {language === 'ar' ? 'اسم المتجر' : 'Store Name'}
-                  </Label>
-                  <div className="relative">
-                    <Store
-                      className={cn(
-                        'absolute top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground',
-                        direction === 'rtl' ? 'right-3' : 'left-3',
-                      )}
-                    />
-                    <Input
-                      id="storeName"
-                      className={cn('h-12', direction === 'rtl' ? 'pr-10 text-right' : 'pl-10')}
-                      {...form.register('storeName')}
-                    />
-                  </div>
-                  {form.formState.errors.storeName && (
-                    <p className="text-sm text-destructive">{form.formState.errors.storeName.message}</p>
+                  {form.formState.errors.username && (
+                    <p className="text-sm text-destructive">{form.formState.errors.username.message}</p>
                   )}
                 </div>
 
@@ -341,8 +315,8 @@ export default function RegisterPage() {
                     className={cn('cursor-pointer text-sm font-normal leading-relaxed', direction === 'rtl' && 'text-right')}
                   >
                     {language === 'ar'
-                      ? 'أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بالواجهة الحالية.'
-                      : 'I agree to the Terms of Service and Privacy Policy for this frontend shell.'}
+                      ? 'أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بواجهة Souq Engine.'
+                      : 'I agree to the Terms of Service and Privacy Policy for the Souq Engine frontend.'}
                   </Label>
                 </div>
                 {form.formState.errors.agreeToTerms && (

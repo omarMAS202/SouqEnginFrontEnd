@@ -36,7 +36,7 @@ export default function AdminLayoutShell({
   const { user, logout } = useAuth()
 
   return (
-    <AuthRouteGuard roles={['admin']}>
+    <AuthRouteGuard roles={['super_admin']}>
       <div className="min-h-screen bg-background">
         <aside
           className={cn(

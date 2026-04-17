@@ -6,22 +6,22 @@ import { useAuth } from './useAuth'
 import { authService } from '../services/auth.service'
 
 export function useUserStores() {
-  const { user } = useAuth()
+  const { user, accessToken } = useAuth()
 
   return useQuery({
-    queryKey: ['auth', 'stores', user?.id],
-    queryFn: () => authService.listUserStores(user),
+    queryKey: ['auth', 'stores', user?.id, accessToken],
+    queryFn: () => authService.listUserStores(user, accessToken),
     enabled: !!user,
     staleTime: Infinity,
   })
 }
 
 export function useCurrentStoreBootstrap() {
-  const { user, currentStoreId } = useAuth()
+  const { user, currentStoreId, accessToken } = useAuth()
 
   return useQuery({
-    queryKey: ['auth', 'store-bootstrap', user?.id, currentStoreId],
-    queryFn: () => authService.getCurrentStoreBootstrap(user, currentStoreId),
+    queryKey: ['auth', 'store-bootstrap', user?.id, currentStoreId, accessToken],
+    queryFn: () => authService.getCurrentStoreBootstrap(user, currentStoreId, accessToken),
     enabled: !!user,
     staleTime: Infinity,
   })

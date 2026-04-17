@@ -7,14 +7,9 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
-    fullName: z.string().min(2, 'Full name is required.'),
-    storeName: z.string().min(2, 'Store name is required.'),
+    username: z.string().min(3, 'Username is required.'),
     email: z.string().email('Enter a valid email address.'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters.')
-      .regex(/[A-Z]/, 'Password must include at least one uppercase letter.')
-      .regex(/[0-9]/, 'Password must include at least one number.'),
+    password: z.string().min(8, 'Password must be at least 8 characters.'),
     confirmPassword: z.string(),
     agreeToTerms: z.boolean().refine((value) => value, {
       message: 'You must accept the terms to continue.',

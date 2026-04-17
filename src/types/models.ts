@@ -1,4 +1,4 @@
-export type UserRole = 'store_owner' | 'admin'
+export type UserRole = 'store_owner' | 'super_admin'
 
 export interface StoreTheme {
   primaryColor: string

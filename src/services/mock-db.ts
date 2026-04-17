@@ -67,7 +67,7 @@ const seedUsers: UserRecord[] = [
     fullName: 'Admin User',
     email: 'admin@souqengine.com',
     password: 'Admin123',
-    role: 'admin',
+    role: 'super_admin',
     storeIds: [adminStoreId],
   },
 ]

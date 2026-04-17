@@ -7,12 +7,12 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
-import { useLanguage } from '@/features/localization'
-import { toast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useLanguage } from '@/features/localization'
+import { toast } from '@/hooks/useToast'
 import { cn } from '@/utils/cn'
 
 import { useAuth } from '../hooks/useAuth'
@@ -27,32 +27,31 @@ export default function LoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'owner@souqengine.com',
-      password: 'Owner123',
+      email: '',
+      password: '',
     },
   })
 
   useEffect(() => {
     if (!isAuthenticated || !user) return
-    router.replace(user.role === 'admin' ? '/admin' : '/dashboard')
+    router.replace(user.role === 'super_admin' ? '/admin' : '/dashboard')
   }, [isAuthenticated, router, user])
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      const loggedInUser = await login(values)
+      const session = await login(values)
       toast({
         title: language === 'ar' ? 'تم تسجيل الدخول' : 'Signed in successfully',
         description:
           language === 'ar'
-            ? `مرحباً بعودتك يا ${loggedInUser.fullName}.`
-            : `Welcome back, ${loggedInUser.fullName}.`,
+            ? `مرحبًا بعودتك يا ${session.user.fullName}.`
+            : `Welcome back, ${session.user.fullName}.`,
       })
-      router.push(loggedInUser.role === 'admin' ? '/admin' : '/dashboard')
+      router.push(session.user.role === 'super_admin' ? '/admin' : '/dashboard')
     } catch (error) {
       toast({
         title: language === 'ar' ? 'تعذر تسجيل الدخول' : 'Unable to sign in',
-        description:
-          error instanceof Error ? error.message : language === 'ar' ? 'يرجى المحاولة مرة أخرى.' : 'Please try again.',
+        description: error instanceof Error ? error.message : language === 'ar' ? 'يرجى المحاولة مرة أخرى.' : 'Please try again.',
         variant: 'destructive',
       })
     }
@@ -80,13 +79,13 @@ export default function LoginPage() {
           <div className="space-y-6">
             <h1 className="text-4xl font-bold leading-tight">
               {language === 'ar'
-                ? 'أنشئ متجرك الإلكتروني خلال دقائق بمساعدة الذكاء الاصطناعي'
-                : 'Build your e-commerce store in minutes with AI'}
+                ? 'ادخل إلى مساحة العمل لإدارة متاجرك وربطها مع الـ backend الحقيقي'
+                : 'Sign in to manage your stores and connect the real backend workspace'}
             </h1>
             <p className="text-lg text-primary-foreground/80">
               {language === 'ar'
-                ? 'واجهة جاهزة للتكامل مع أنظمة المتجر، إدارة المنتجات، والطلبات دون تشتيت.'
-                : 'An integration-ready storefront workspace for products, orders, and store operations.'}
+                ? 'بعد تسجيل الدخول سنجلب بيانات المستخدم الحالية ثم قائمة المتاجر المرتبطة بحسابك.'
+                : 'After sign in, the frontend will bootstrap your user session and load your available stores.'}
             </p>
           </div>
 
@@ -102,7 +101,7 @@ export default function LoginPage() {
               ))}
             </div>
             <p className="text-sm text-primary-foreground/80">
-              {language === 'ar' ? 'مساحة عمل جاهزة للفريق والربط الخلفي' : 'Built for fast team handoff and backend integration'}
+              {language === 'ar' ? 'تدفق دخول جاهز للربط مع JWT و bootstrap المتاجر' : 'JWT-ready sign-in flow with store bootstrap'}
             </p>
           </div>
         </div>
@@ -165,8 +164,8 @@ export default function LoginPage() {
                     <Label htmlFor="password">{t('auth.password')}</Label>
                     <span className="text-sm text-muted-foreground">
                       {language === 'ar'
-                        ? 'استعادة كلمة المرور تتطلب ربط backend لاحقاً'
-                        : 'Password recovery will be enabled after backend integration'}
+                        ? 'استعادة كلمة المرور ستربط لاحقًا مع الـ backend'
+                        : 'Password recovery will be connected once the backend exposes it'}
                     </span>
                   </div>
                   <div className="relative">

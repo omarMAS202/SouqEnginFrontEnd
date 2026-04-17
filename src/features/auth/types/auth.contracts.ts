@@ -1,5 +1,5 @@
 import type { RequestMetadata, StoreScopedResource } from '@/types/api-contracts'
-import type { SessionUser, StoreRecord } from '@/types/models'
+import type { SessionUser, UserRole } from '@/types/models'
 
 export interface LoginRequestDto {
   email: string
@@ -7,30 +7,47 @@ export interface LoginRequestDto {
 }
 
 export interface RegisterRequestDto {
-  full_name: string
+  username: string
   email: string
   password: string
-  store_name: string
+  role: 'Store Owner'
 }
 
-export interface AuthUserDto {
-  user_id: string
-  full_name: string
+export interface AuthLoginResponseDto extends RequestMetadata {
+  access: string
+  refresh: string
+  user_id: number
+  role: 'Store Owner' | 'Super Admin'
+  tenant_id: number | null
+}
+
+export interface AuthMeResponseDto extends RequestMetadata {
+  user_id: number
+  username: string
   email: string
-  role: SessionUser['role']
-  accessible_store_ids: string[]
+  role: 'Store Owner' | 'Super Admin'
+  tenant_id: number | null
+  is_active: boolean
+  display_name?: string | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
-export interface AuthSessionResponseDto extends RequestMetadata {
-  user: AuthUserDto
-  current_store_id?: string | null
+export interface RegisterResponseDto extends RequestMetadata {
+  detail: string
 }
 
 export interface StoreSummaryDto extends StoreScopedResource {
   id: string
+  owner_id: string
   name: string
+  slug: string
+  description?: string | null
+  tenant_id: string | null
+  created_at?: string | null
+  updated_at?: string | null
   url: string
-  status?: StoreRecord['status'] | null
+  status?: 'active' | 'suspended' | 'draft' | 'setup' | null
 }
 
 export interface StoreBootstrapResponseDto extends RequestMetadata {
@@ -43,17 +60,46 @@ export interface StoreSelectorItem {
   id: string
   storeId: string
   name: string
+  slug: string
+  description?: string
+  tenantId: string | null
   url: string
-  status: StoreRecord['status'] | 'draft'
+  status: 'active' | 'suspended' | 'draft' | 'setup'
 }
 
-export function normalizeSessionUser(dto: AuthUserDto): SessionUser {
+export interface AuthSessionModel {
+  user: SessionUser
+  currentStoreId: string | null
+  stores: StoreSelectorItem[]
+  tenantId: string | null
+  accessToken: string | null
+  refreshToken: string | null
+}
+
+export interface RegistrationResult {
+  message: string
+}
+
+export interface AuthBootstrapInput {
+  accessToken: string | null
+  refreshToken: string | null
+  currentStoreId: string | null
+}
+
+export function normalizeUserRole(role: AuthLoginResponseDto['role'] | AuthMeResponseDto['role']): UserRole {
+  return role === 'Super Admin' ? 'super_admin' : 'store_owner'
+}
+
+export function normalizeSessionUser(
+  me: AuthMeResponseDto,
+  stores: StoreSummaryDto[],
+): SessionUser {
   return {
-    id: dto.user_id,
-    fullName: dto.full_name,
-    email: dto.email,
-    role: dto.role,
-    storeIds: dto.accessible_store_ids ?? [],
+    id: String(me.user_id),
+    fullName: me.display_name?.trim() || me.username,
+    email: me.email,
+    role: normalizeUserRole(me.role),
+    storeIds: stores.map((store) => store.store_id),
   }
 }
 
@@ -62,6 +108,9 @@ export function normalizeStoreSelectorItem(dto: StoreSummaryDto): StoreSelectorI
     id: dto.id,
     storeId: dto.store_id,
     name: dto.name,
+    slug: dto.slug,
+    description: dto.description ?? undefined,
+    tenantId: dto.tenant_id,
     url: dto.url,
     status: dto.status ?? 'draft',
   }

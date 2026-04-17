@@ -15,10 +15,9 @@ describe('auth schemas', () => {
   it('rejects mismatched register passwords', () => {
     expect(
       registerSchema.safeParse({
-        fullName: 'Ahmed Hassan',
-        storeName: 'Fashion Boutique',
+        username: 'ahmedhassan',
         email: 'owner@souqengine.com',
-        password: 'Owner123',
+        password: '12345678',
         confirmPassword: 'Mismatch123',
         agreeToTerms: true,
       }).success,
