@@ -1,11 +1,14 @@
-import type { RequestMetadata, StoreScopedResource } from '@/types/api-contracts'
+import type { StoreScopedResource } from '@/types/api-contracts'
 
-export interface CategoryRecordDto extends StoreScopedResource {
-  id: string
+export interface CategoryRecordDto {
+  id: string | number
+  store_id?: string | number
   name?: string | null
   description?: string | null
   image_url?: string | null
   product_count?: number | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export interface SaveCategoryRequestDto extends StoreScopedResource {
@@ -13,15 +16,6 @@ export interface SaveCategoryRequestDto extends StoreScopedResource {
   name: string
   description: string
   image_url?: string | null
-}
-
-export interface DeleteCategoryRequestDto extends StoreScopedResource {
-  category_id: string
-}
-
-export interface CategoryListResponseDto extends RequestMetadata {
-  store_id: string
-  items: CategoryRecordDto[]
 }
 
 export interface CategoryListItemModel {
@@ -33,10 +27,13 @@ export interface CategoryListItemModel {
   productCount: number
 }
 
-export function normalizeCategoryRecord(dto: CategoryRecordDto): CategoryListItemModel {
+export function normalizeCategoryRecord(
+  dto: CategoryRecordDto,
+  fallbackStoreId?: string,
+): CategoryListItemModel {
   return {
-    id: dto.id,
-    storeId: dto.store_id,
+    id: String(dto.id),
+    storeId: dto.store_id !== undefined && dto.store_id !== null ? String(dto.store_id) : fallbackStoreId ?? '',
     name: dto.name ?? 'Untitled category',
     description: dto.description ?? '',
     image: dto.image_url ?? '',

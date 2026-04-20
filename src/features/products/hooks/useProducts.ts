@@ -6,7 +6,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth'
 import { requireStoreScope } from '@/features/auth/utils/require-store-scope'
 
 import { productsService } from '../services/products.service'
-import type { ProductSchemaValues } from '../schemas/product.schema'
+import type { ProductMutationInput } from '../types/product.types'
 
 export function useProducts() {
   const { currentStoreId } = useAuth()
@@ -30,11 +30,12 @@ export function useProductMutations() {
 
   return {
     createProduct: useMutation({
-      mutationFn: (input: ProductSchemaValues) => productsService.create(requireStoreScope(currentStoreId), input),
+      mutationFn: (input: ProductMutationInput) =>
+        productsService.create(requireStoreScope(currentStoreId), input),
       onSuccess: invalidate,
     }),
     updateProduct: useMutation({
-      mutationFn: ({ productId, input }: { productId: string; input: ProductSchemaValues }) =>
+      mutationFn: ({ productId, input }: { productId: string; input: ProductMutationInput }) =>
         productsService.update(requireStoreScope(currentStoreId), productId, input),
       onSuccess: invalidate,
     }),

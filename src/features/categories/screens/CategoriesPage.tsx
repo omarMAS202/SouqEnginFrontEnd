@@ -52,6 +52,18 @@ export default function CategoriesPage() {
     setDialogOpen(true)
   }
 
+  const totalProducts = categories.reduce((sum, category) => sum + category.productCount, 0)
+  const averageProductsPerCategory = categories.length ? Math.round(totalProducts / categories.length) : 0
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open)
+
+    if (!open) {
+      setEditingCategoryId(undefined)
+      form.reset({ name: '', description: '' })
+    }
+  }
+
   if (isLoading) {
     return <LoadingState message={t('common.loading')} />
   }
@@ -75,7 +87,7 @@ export default function CategoriesPage() {
           </p>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger asChild>
             <Button className={cn('gap-2', direction === 'rtl' && 'flex-row-reverse')} onClick={openCreateDialog}>
               <Plus className="h-4 w-4" />
@@ -103,7 +115,7 @@ export default function CategoriesPage() {
                         ? `تم حفظ ${values.name} بنجاح.`
                         : `${values.name} was saved successfully.`,
                   })
-                  setDialogOpen(false)
+                  handleDialogOpenChange(false)
                 } catch (saveError) {
                   toast({
                     title: language === 'ar' ? 'تعذر حفظ الفئة' : 'Could not save category',
@@ -126,10 +138,12 @@ export default function CategoriesPage() {
                 />
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => handleDialogOpenChange(false)}>
                   {t('common.cancel')}
                 </Button>
-                <Button type="submit">{t('common.save')}</Button>
+                <Button type="submit" disabled={saveCategory.isPending}>
+                  {t('common.save')}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -163,7 +177,7 @@ export default function CategoriesPage() {
                   {language === 'ar' ? 'إجمالي المنتجات' : 'Total Products'}
                 </p>
                 <p className="text-2xl font-bold text-foreground">
-                  {categories.reduce((sum, category) => sum + category.productCount, 0)}
+                  {totalProducts}
                 </p>
               </div>
             </div>
@@ -180,12 +194,7 @@ export default function CategoriesPage() {
                   {language === 'ar' ? 'متوسط المنتجات لكل فئة' : 'Avg Products/Category'}
                 </p>
                 <p className="text-2xl font-bold text-foreground">
-                  {categories.length
-                    ? Math.round(
-                        categories.reduce((sum, category) => sum + category.productCount, 0) /
-                          categories.length,
-                      )
-                    : 0}
+                  {averageProductsPerCategory}
                 </p>
               </div>
             </div>
@@ -229,7 +238,11 @@ export default function CategoriesPage() {
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -247,6 +260,7 @@ export default function CategoriesPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="gap-2 text-destructive"
+                          disabled={deleteCategory.isPending}
                           onClick={async () => {
                             try {
                               await deleteCategory.mutateAsync(category.id)
