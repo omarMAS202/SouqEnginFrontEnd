@@ -5,6 +5,7 @@ export interface StoreTheme {
   backgroundColor: string
   font: string
   style: string
+  logoUrl?: string
 }
 
 export interface StoreSettings {
@@ -27,9 +28,12 @@ export interface StoreRecord {
   name: string
   url: string
   description: string
-  status: 'active' | 'suspended'
+  status: 'active' | 'suspended' | 'draft' | 'setup'
   ownerId: string
   theme: StoreTheme
+  subdomain?: string
+  isPublished?: boolean
+  publishedAt?: string | null
 }
 
 export interface UserRecord {

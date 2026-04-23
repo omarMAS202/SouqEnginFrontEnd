@@ -22,7 +22,11 @@ import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
-import { EmptyState, ErrorState, LoadingState } from '@/components/shared/ScreenState'
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from '@/components/shared/ScreenState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -58,7 +62,10 @@ import { toast } from '@/hooks/useToast'
 import { cn } from '@/utils/cn'
 
 import { useProductMutations, useProducts } from '../hooks/useProducts'
-import { productSchema, type ProductSchemaValues } from '../schemas/product.schema'
+import {
+  productSchema,
+  type ProductSchemaValues,
+} from '../schemas/product.schema'
 import { productsService } from '../services/products.service'
 import type { ProductImageModel, ProductListItem } from '../types/product.types'
 
@@ -93,25 +100,40 @@ function formatDate(value?: string | null) {
     day: '2-digit',
   }).format(date)
 }
-function StatusPill({ status }: { status: ProductSchemaValues['status'] | ProductListItem['status'] }) {
+function StatusPill({
+  status,
+}: {
+  status: ProductSchemaValues['status'] | ProductListItem['status']
+}) {
   return (
-    <span className={cn('inline-flex rounded-full px-3 py-1 text-xs font-semibold', statusColors[status])}>
-      {status === 'active' ? 'Active' : status === 'draft' ? 'Draft' : 'Out of Stock'}
+    <span
+      className={cn(
+        'inline-flex rounded-full px-3 py-1 text-xs font-semibold',
+        statusColors[status],
+      )}
+    >
+      {status === 'active'
+        ? 'Active'
+        : status === 'draft'
+          ? 'Draft'
+          : 'Out of Stock'}
     </span>
   )
 }
 
-function ProductRowThumbnail({
-  product,
-}: {
-  product: ProductListItem
-}) {
+function ProductRowThumbnail({ product }: { product: ProductListItem }) {
   const imageUrl = product.image || ''
 
   if (imageUrl) {
     return (
       <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-border bg-secondary">
-        <Image src={imageUrl} alt={product.name} fill className="object-cover" unoptimized />
+        <Image
+          src={imageUrl}
+          alt={product.name}
+          fill
+          className="object-cover"
+          unoptimized
+        />
       </div>
     )
   }
@@ -136,7 +158,13 @@ function ProductPreviewCard({
     <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
         {imageUrl ? (
-          <Image src={imageUrl} alt={title} fill className="object-cover" unoptimized />
+          <Image
+            src={imageUrl}
+            alt={title}
+            fill
+            className="object-cover"
+            unoptimized
+          />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
             <ImageIcon className="h-8 w-8" />
@@ -146,8 +174,12 @@ function ProductPreviewCard({
       </div>
 
       <div className="mt-4 min-w-0">
-        <p className="truncate text-base font-semibold text-slate-900">{title}</p>
-        {subtitle ? <p className="truncate text-sm text-slate-500">{subtitle}</p> : null}
+        <p className="truncate text-base font-semibold text-slate-900">
+          {title}
+        </p>
+        {subtitle ? (
+          <p className="truncate text-sm text-slate-500">{subtitle}</p>
+        ) : null}
       </div>
     </div>
   )
@@ -163,9 +195,14 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const [editingProduct, setEditingProduct] = useState<ProductListItem | null>(null)
-  const [selectedProduct, setSelectedProduct] = useState<ProductListItem | null>(null)
-  const [selectedProductImages, setSelectedProductImages] = useState<ProductImageModel[]>([])
+  const [editingProduct, setEditingProduct] = useState<ProductListItem | null>(
+    null,
+  )
+  const [selectedProduct, setSelectedProduct] =
+    useState<ProductListItem | null>(null)
+  const [selectedProductImages, setSelectedProductImages] = useState<
+    ProductImageModel[]
+  >([])
   const [editingImages, setEditingImages] = useState<ProductImageModel[]>([])
   const [detailsLoading, setDetailsLoading] = useState(false)
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
@@ -181,7 +218,12 @@ export default function ProductsPage() {
   const filteredProducts = useMemo(
     () =>
       products.filter((product) =>
-        [product.name, product.sku ?? '', product.categoryLabel, product.description]
+        [
+          product.name,
+          product.sku ?? '',
+          product.categoryLabel,
+          product.description,
+        ]
           .join(' ')
           .toLowerCase()
           .includes(searchQuery.toLowerCase()),
@@ -272,7 +314,8 @@ export default function ProductsPage() {
     } catch (loadError) {
       toast({
         title: 'Unable to load product details',
-        description: loadError instanceof Error ? loadError.message : 'Please try again.',
+        description:
+          loadError instanceof Error ? loadError.message : 'Please try again.',
         variant: 'destructive',
       })
     } finally {
@@ -302,7 +345,8 @@ export default function ProductsPage() {
     } catch (loadError) {
       toast({
         title: 'Unable to load product details',
-        description: loadError instanceof Error ? loadError.message : 'Please try again.',
+        description:
+          loadError instanceof Error ? loadError.message : 'Please try again.',
         variant: 'destructive',
       })
       setDetailsOpen(false)
@@ -326,7 +370,10 @@ export default function ProductsPage() {
       }
 
       if (editingProduct) {
-        await updateProduct.mutateAsync({ productId: editingProduct.id, input: mutationInput })
+        await updateProduct.mutateAsync({
+          productId: editingProduct.id,
+          input: mutationInput,
+        })
         toast({
           title: 'Product updated',
           description: `${values.name} was updated successfully.`,
@@ -344,7 +391,8 @@ export default function ProductsPage() {
     } catch (saveError) {
       toast({
         title: 'Unable to save product',
-        description: saveError instanceof Error ? saveError.message : 'Please try again.',
+        description:
+          saveError instanceof Error ? saveError.message : 'Please try again.',
         variant: 'destructive',
       })
     }
@@ -359,9 +407,12 @@ export default function ProductsPage() {
         )}
       >
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{t('products.title')}</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            {t('products.title')}
+          </h1>
           <p className="text-muted-foreground">
-            Manage your product catalog, SKU, stock, images, and backend-backed details.
+            Manage your product catalog, SKU, stock, images, and backend-backed
+            details.
           </p>
         </div>
 
@@ -385,439 +436,568 @@ export default function ProductsPage() {
           </DialogTrigger>
 
           <DialogContent className="!w-[96vw] !max-w-[1440px] h-[94vh] overflow-hidden border-0 bg-transparent p-0 shadow-none">
-  <DialogTitle className="sr-only">
-    {editingProduct ? 'Edit Product Dialog' : 'Add Product Dialog'}
-  </DialogTitle>
-
-  <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
-    <DialogHeader className="shrink-0 border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#eef4ff_55%,#f8fafc_100%)] px-6 py-5 sm:px-8 lg:px-10">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-3 min-w-0">
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
-            <PencilLine className="h-3.5 w-3.5 text-primary" />
-            Product Workspace
-          </div>
-
-          <div className="space-y-2">
-            <DialogTitle className="text-2xl font-semibold tracking-tight text-slate-950">
-              {editingProduct ? 'Edit Product' : t('products.addProduct')}
+            <DialogTitle className="sr-only">
+              {editingProduct ? 'Edit Product Dialog' : 'Add Product Dialog'}
             </DialogTitle>
 
-            <DialogDescription className="max-w-2xl text-sm leading-6 text-slate-600">
-              Refine the core product information, then review the live preview and image controls before saving.
-            </DialogDescription>
-          </div>
-        </div>
+            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
+              <DialogHeader className="shrink-0 border-b border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#eef4ff_55%,#f8fafc_100%)] px-6 py-5 sm:px-8 lg:px-10">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-3 min-w-0">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
+                      <PencilLine className="h-3.5 w-3.5 text-primary" />
+                      Product Workspace
+                    </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Mode</p>
-          <p className="mt-1 text-sm font-semibold text-slate-900">
-            {editingProduct ? 'Editing existing item' : 'Creating new item'}
-          </p>
-        </div>
-      </div>
-    </DialogHeader>
+                    <div className="space-y-2">
+                      <DialogTitle className="text-2xl font-semibold tracking-tight text-slate-950">
+                        {editingProduct
+                          ? 'Edit Product'
+                          : t('products.addProduct')}
+                      </DialogTitle>
 
-    <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
-      <div className="grid min-h-0 flex-1 gap-0 xl:grid-cols-[minmax(0,1.2fr)_420px]">
-        <div className="min-w-0 overflow-y-auto px-6 py-6 sm:px-8 lg:px-10">
-          <div className="grid min-w-0 gap-6 2xl:grid-cols-2">
-            <section className="min-w-0 space-y-4 rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Package className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-900">Core Details</p>
-                  <p className="text-sm text-slate-500">Name, SKU, copy, and pricing information.</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="grid gap-2 min-w-0">
-                  <Label>{t('products.name')}</Label>
-                  <Input {...form.register('name')} placeholder="Wireless Mouse" className="h-12 rounded-2xl bg-white" />
-                  {form.formState.errors.name && (
-                    <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
-                  )}
-                </div>
-
-                <div className="grid gap-2 min-w-0">
-                  <Label>SKU</Label>
-                  <Input {...form.register('sku')} placeholder="MOUSE-BT-001" className="h-12 rounded-2xl bg-white" />
-                  {form.formState.errors.sku && (
-                    <p className="text-sm text-destructive">{form.formState.errors.sku.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid gap-2 min-w-0">
-                <Label>Description</Label>
-                <Textarea
-                  rows={6}
-                  {...form.register('description')}
-                  placeholder="Describe the product..."
-                  className="min-h-36 rounded-2xl bg-white"
-                />
-                {form.formState.errors.description && (
-                  <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
-                )}
-              </div>
-            </section>
-
-            <section className="min-w-0 space-y-4 rounded-3xl border border-slate-200 bg-white p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-900">Catalog Settings</p>
-                  <p className="text-sm text-slate-500">Set pricing, stock, category, and availability.</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="grid gap-2 min-w-0">
-                  <Label>{t('products.price')}</Label>
-                  <Input type="number" step="0.01" {...form.register('price')} className="h-12 rounded-2xl bg-white" />
-                  {form.formState.errors.price && (
-                    <p className="text-sm text-destructive">{form.formState.errors.price.message}</p>
-                  )}
-                </div>
-
-                <div className="grid gap-2 min-w-0">
-                  <Label>{t('products.stock')}</Label>
-                  <Input type="number" {...form.register('stock')} className="h-12 rounded-2xl bg-white" />
-                  {form.formState.errors.stock && (
-                    <p className="text-sm text-destructive">{form.formState.errors.stock.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="grid gap-2 min-w-0">
-                  <Label>{t('products.category')}</Label>
-                  <Select
-                    value={form.watch('categoryId')}
-                    onValueChange={(value) =>
-                      form.setValue('categoryId', value, { shouldDirty: true, shouldValidate: true })
-                    }
-                  >
-                    <SelectTrigger className="h-12 rounded-2xl bg-white">
-                      <SelectValue placeholder="Choose a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.categoryId && (
-                    <p className="text-sm text-destructive">{form.formState.errors.categoryId.message}</p>
-                  )}
-                </div>
-
-                <div className="grid gap-2 min-w-0">
-                  <Label>{t('products.status')}</Label>
-                  <Select
-                    value={form.watch('status')}
-                    onValueChange={(value: ProductSchemaValues['status']) =>
-                      form.setValue('status', value, { shouldDirty: true })
-                    }
-                  >
-                    <SelectTrigger className="h-12 rounded-2xl bg-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="out_of_stock">Out of Stock</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid gap-2 min-w-0">
-                <Label>Image URL</Label>
-                <Input
-                  {...form.register('image')}
-                  placeholder="https://example.com/product-image.jpg"
-                  className="h-12 rounded-2xl bg-white"
-                />
-                {form.formState.errors.image && (
-                  <p className="text-sm text-destructive">{form.formState.errors.image.message}</p>
-                )}
-              </div>
-            </section>
-          </div>
-        </div>
-
-        <aside className="min-w-0 overflow-y-auto border-t border-slate-200 bg-slate-50/70 px-6 py-6 xl:border-l xl:border-t-0">
-          <div className="space-y-5">
-            <ProductPreviewCard
-              imageUrl={formPreviewUrl}
-              title={form.watch('name') || 'Product preview'}
-              subtitle={form.watch('sku') ? `SKU: ${form.watch('sku')}` : 'No SKU yet'}
-            />
-
-            <Card className="overflow-hidden rounded-3xl border-slate-200 bg-white shadow-sm">
-              <CardContent className="space-y-4 p-5">
-                <div className="space-y-1">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-                    <FolderOpen className="h-3.5 w-3.5" />
-                    Media
+                      <DialogDescription className="max-w-2xl text-sm leading-6 text-slate-600">
+                        Refine the core product information, then review the
+                        live preview and image controls before saving.
+                      </DialogDescription>
+                    </div>
                   </div>
-                  <p className="text-lg font-semibold text-slate-950">Image controls</p>
-                  <p className="text-sm leading-6 text-slate-500">
-                    Replace the current image, upload a new one, or remove it before saving.
-                  </p>
-                </div>
 
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
-                  <Label className="mb-3 block text-sm font-medium text-slate-700">Upload image file</Label>
-                  <div className="space-y-3">
-                    <Input
-                      key={imageInputKey}
-                      type="file"
-                      accept="image/*"
-                      onChange={(event) => setSelectedImageFile(event.target.files?.[0] ?? null)}
-                      className="rounded-2xl bg-white"
-                    />
-                    {selectedImageFile ? (
-                      <span className="block break-all text-sm text-slate-500">{selectedImageFile.name}</span>
-                    ) : null}
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                      Mode
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                      {editingProduct
+                        ? 'Editing existing item'
+                        : 'Creating new item'}
+                    </p>
                   </div>
                 </div>
+              </DialogHeader>
 
-                {(formPreviewUrl || editingImages.length > 0 || selectedImageFile) && (
+              <form
+                onSubmit={onSubmit}
+                className="flex min-h-0 flex-1 flex-col"
+              >
+                <div className="grid min-h-0 flex-1 gap-0 xl:grid-cols-[minmax(0,1.2fr)_420px]">
+                  <div className="min-w-0 overflow-y-auto px-6 py-6 sm:px-8 lg:px-10">
+                    <div className="grid min-w-0 gap-6 2xl:grid-cols-2">
+                      <section className="min-w-0 space-y-4 rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                            <Package className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900">
+                              Core Details
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              Name, SKU, copy, and pricing information.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <div className="grid gap-2 min-w-0">
+                            <Label>{t('products.name')}</Label>
+                            <Input
+                              {...form.register('name')}
+                              placeholder="Wireless Mouse"
+                              className="h-12 rounded-2xl bg-white"
+                            />
+                            {form.formState.errors.name && (
+                              <p className="text-sm text-destructive">
+                                {form.formState.errors.name.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="grid gap-2 min-w-0">
+                            <Label>SKU</Label>
+                            <Input
+                              {...form.register('sku')}
+                              placeholder="MOUSE-BT-001"
+                              className="h-12 rounded-2xl bg-white"
+                            />
+                            {form.formState.errors.sku && (
+                              <p className="text-sm text-destructive">
+                                {form.formState.errors.sku.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid gap-2 min-w-0">
+                          <Label>Description</Label>
+                          <Textarea
+                            rows={6}
+                            {...form.register('description')}
+                            placeholder="Describe the product..."
+                            className="min-h-36 rounded-2xl bg-white"
+                          />
+                          {form.formState.errors.description && (
+                            <p className="text-sm text-destructive">
+                              {form.formState.errors.description.message}
+                            </p>
+                          )}
+                        </div>
+                      </section>
+
+                      <section className="min-w-0 space-y-4 rounded-3xl border border-slate-200 bg-white p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                            <ShieldCheck className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900">
+                              Catalog Settings
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              Set pricing, stock, category, and availability.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <div className="grid gap-2 min-w-0">
+                            <Label>{t('products.price')}</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              {...form.register('price')}
+                              className="h-12 rounded-2xl bg-white"
+                            />
+                            {form.formState.errors.price && (
+                              <p className="text-sm text-destructive">
+                                {form.formState.errors.price.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="grid gap-2 min-w-0">
+                            <Label>{t('products.stock')}</Label>
+                            <Input
+                              type="number"
+                              {...form.register('stock')}
+                              className="h-12 rounded-2xl bg-white"
+                            />
+                            {form.formState.errors.stock && (
+                              <p className="text-sm text-destructive">
+                                {form.formState.errors.stock.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <div className="grid gap-2 min-w-0">
+                            <Label>{t('products.category')}</Label>
+                            <Select
+                              value={form.watch('categoryId')}
+                              onValueChange={(value) =>
+                                form.setValue('categoryId', value, {
+                                  shouldDirty: true,
+                                  shouldValidate: true,
+                                })
+                              }
+                            >
+                              <SelectTrigger className="h-12 rounded-2xl bg-white">
+                                <SelectValue placeholder="Choose a category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {categories.map((category) => (
+                                  <SelectItem
+                                    key={category.id}
+                                    value={category.id}
+                                  >
+                                    {category.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {form.formState.errors.categoryId && (
+                              <p className="text-sm text-destructive">
+                                {form.formState.errors.categoryId.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="grid gap-2 min-w-0">
+                            <Label>{t('products.status')}</Label>
+                            <Select
+                              value={form.watch('status')}
+                              onValueChange={(
+                                value: ProductSchemaValues['status'],
+                              ) =>
+                                form.setValue('status', value, {
+                                  shouldDirty: true,
+                                })
+                              }
+                            >
+                              <SelectTrigger className="h-12 rounded-2xl bg-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="draft">Draft</SelectItem>
+                                <SelectItem value="out_of_stock">
+                                  Out of Stock
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-2 min-w-0">
+                          <Label>Image URL</Label>
+                          <Input
+                            {...form.register('image')}
+                            placeholder="https://example.com/product-image.jpg"
+                            className="h-12 rounded-2xl bg-white"
+                          />
+                          {form.formState.errors.image && (
+                            <p className="text-sm text-destructive">
+                              {form.formState.errors.image.message}
+                            </p>
+                          )}
+                        </div>
+                      </section>
+                    </div>
+                  </div>
+
+                  <aside className="min-w-0 overflow-y-auto border-t border-slate-200 bg-slate-50/70 px-6 py-6 xl:border-l xl:border-t-0">
+                    <div className="space-y-5">
+                      <ProductPreviewCard
+                        imageUrl={formPreviewUrl}
+                        title={form.watch('name') || 'Product preview'}
+                        subtitle={
+                          form.watch('sku')
+                            ? `SKU: ${form.watch('sku')}`
+                            : 'No SKU yet'
+                        }
+                      />
+
+                      <Card className="overflow-hidden rounded-3xl border-slate-200 bg-white shadow-sm">
+                        <CardContent className="space-y-4 p-5">
+                          <div className="space-y-1">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+                              <FolderOpen className="h-3.5 w-3.5" />
+                              Media
+                            </div>
+                            <p className="text-lg font-semibold text-slate-950">
+                              Image controls
+                            </p>
+                            <p className="text-sm leading-6 text-slate-500">
+                              Replace the current image, upload a new one, or
+                              remove it before saving.
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                            <Label className="mb-3 block text-sm font-medium text-slate-700">
+                              Upload image file
+                            </Label>
+                            <div className="space-y-3">
+                              <Input
+                                key={imageInputKey}
+                                type="file"
+                                accept="image/*"
+                                onChange={(event) =>
+                                  setSelectedImageFile(
+                                    event.target.files?.[0] ?? null,
+                                  )
+                                }
+                                className="rounded-2xl bg-white"
+                              />
+                              {selectedImageFile ? (
+                                <span className="block break-all text-sm text-slate-500">
+                                  {selectedImageFile.name}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {(formPreviewUrl ||
+                            editingImages.length > 0 ||
+                            selectedImageFile) && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full gap-2 rounded-2xl"
+                              onClick={removeSelectedImage}
+                            >
+                              <X className="h-4 w-4" />
+                              Remove image
+                            </Button>
+                          )}
+
+                          {editingImages.length > 0 ? (
+                            <div className="space-y-3">
+                              <p className="text-sm font-medium text-slate-700">
+                                Existing backend images
+                              </p>
+                              <div className="grid grid-cols-3 gap-2">
+                                {editingImages.map((image) => (
+                                  <div
+                                    key={image.id}
+                                    className="relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+                                  >
+                                    {image.url ? (
+                                      <Image
+                                        src={image.url}
+                                        alt="Product image"
+                                        fill
+                                        className="object-cover"
+                                        unoptimized
+                                      />
+                                    ) : (
+                                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                                        <ImageIcon className="h-5 w-5" />
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </aside>
+                </div>
+
+                <DialogFooter className="shrink-0 border-t border-slate-200 bg-white px-6 py-4 sm:px-8 lg:px-10">
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full gap-2 rounded-2xl"
-                    onClick={removeSelectedImage}
+                    className="rounded-2xl"
+                    onClick={() => setDialogOpen(false)}
                   >
-                    <X className="h-4 w-4" />
-                    Remove image
+                    {t('common.cancel')}
                   </Button>
-                )}
-
-                {editingImages.length > 0 ? (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-slate-700">Existing backend images</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {editingImages.map((image) => (
-                        <div
-                          key={image.id}
-                          className="relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
-                        >
-                          {image.url ? (
-                            <Image src={image.url} alt="Product image" fill className="object-cover" unoptimized />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                              <ImageIcon className="h-5 w-5" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
-          </div>
-        </aside>
-      </div>
-
-      <DialogFooter className="shrink-0 border-t border-slate-200 bg-white px-6 py-4 sm:px-8 lg:px-10">
-        <Button type="button" variant="outline" className="rounded-2xl" onClick={() => setDialogOpen(false)}>
-          {t('common.cancel')}
-        </Button>
-        <Button
-          type="submit"
-          className="rounded-2xl px-6"
-          disabled={createProduct.isPending || updateProduct.isPending || detailsLoading}
-        >
-          <Upload className="mr-2 h-4 w-4" />
-          {editingProduct ? 'Save changes' : t('common.save')}
-        </Button>
-      </DialogFooter>
-    </form>
-  </div>
-</DialogContent>
+                  <Button
+                    type="submit"
+                    className="rounded-2xl px-6"
+                    disabled={
+                      createProduct.isPending ||
+                      updateProduct.isPending ||
+                      detailsLoading
+                    }
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    {editingProduct ? 'Save changes' : t('common.save')}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </div>
+          </DialogContent>
         </Dialog>
       </div>
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-  <DialogContent className="!w-[96vw] !max-w-[1480px] h-[94vh] overflow-hidden border-0 bg-transparent p-0 shadow-none">
-    <DialogTitle className="sr-only">
-      {selectedProduct ? `${selectedProduct.name} product details` : 'Product details dialog'}
-    </DialogTitle>
+        <DialogContent className="!w-[96vw] !max-w-[1480px] h-[94vh] overflow-hidden border-0 bg-transparent p-0 shadow-none">
+          <DialogTitle className="sr-only">
+            {selectedProduct
+              ? `${selectedProduct.name} product details`
+              : 'Product details dialog'}
+          </DialogTitle>
 
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
-      {detailsLoading ? (
-        <div className="p-8">
-          <LoadingState message={t('common.loading')} />
-        </div>
-      ) : selectedProduct ? (
-        <>
-          <DialogHeader className="shrink-0 border-b border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_52%,#eef3ff_100%)] px-6 py-5 sm:px-8 lg:px-10">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-3 min-w-0">
-                <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
-                  <Tag className="h-3.5 w-3.5 text-primary" />
-                  Product Snapshot
-                </div>
-
-                <div className="space-y-2 min-w-0">
-                  <DialogTitle className="truncate text-2xl font-semibold tracking-tight text-slate-950">
-                    {selectedProduct.name}
-                  </DialogTitle>
-                  <DialogDescription className="max-w-2xl text-sm leading-6 text-slate-600">
-                    Complete backend-backed product information, including status, inventory, media, and timestamps.
-                  </DialogDescription>
-                </div>
+          <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
+            {detailsLoading ? (
+              <div className="p-8">
+                <LoadingState message={t('common.loading')} />
               </div>
+            ) : selectedProduct ? (
+              <>
+                <DialogHeader className="shrink-0 border-b border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_52%,#eef3ff_100%)] px-6 py-5 sm:px-8 lg:px-10">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-3 min-w-0">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">
+                        <Tag className="h-3.5 w-3.5 text-primary" />
+                        Product Snapshot
+                      </div>
 
-              <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                <div className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700">
-                  SKU: {selectedProduct.sku ?? 'Not provided'}
-                </div>
-                <StatusPill status={selectedProduct.status} />
-              </div>
-            </div>
-          </DialogHeader>
-
-          <div className="grid min-h-0 flex-1 gap-6 overflow-hidden px-6 py-6 sm:px-8 lg:px-10 xl:grid-cols-[minmax(0,1.25fr)_380px]">
-            <div className="min-w-0 overflow-y-auto pr-1 space-y-6">
-              <Card className="overflow-hidden rounded-3xl border-slate-200 bg-slate-50/70 shadow-sm">
-  <CardContent className="p-5">
-    <div className="flex h-[320px] items-center justify-center overflow-hidden rounded-[24px] border border-slate-200 bg-slate-100 p-4 sm:h-[380px] lg:h-[420px]">
-      {selectedProductImages[0]?.url || selectedProduct.image ? (
-        <div className="relative h-full w-full">
-          <Image
-            src={selectedProductImages[0]?.url || selectedProduct.image}
-            alt={selectedProduct.name}
-            fill
-            className="object-contain"
-            unoptimized
-          />
-        </div>
-      ) : (
-        <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-slate-400">
-          <ImageIcon className="h-10 w-10" />
-          <span className="text-sm font-medium">No product image</span>
-        </div>
-      )}
-    </div>
-  </CardContent>
-</Card>
-
-              <Card className="rounded-3xl border-slate-200 shadow-sm">
-                <CardContent className="p-6">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Description</p>
-                  <p className="mt-4 text-sm leading-7 text-slate-700">
-                    {selectedProduct.description || 'No description available.'}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-3xl border-slate-200 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-semibold text-slate-950">Image gallery</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {selectedProductImages.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-                      No uploaded images for this product yet.
+                      <div className="space-y-2 min-w-0">
+                        <DialogTitle className="truncate text-2xl font-semibold tracking-tight text-slate-950">
+                          {selectedProduct.name}
+                        </DialogTitle>
+                        <DialogDescription className="max-w-2xl text-sm leading-6 text-slate-600">
+                          Complete backend-backed product information, including
+                          status, inventory, media, and timestamps.
+                        </DialogDescription>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-                      {selectedProductImages.map((image) => (
-                        <div
-                          key={image.id}
-                          className="relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
-                        >
-                          {image.url ? (
-                            <Image src={image.url} alt={selectedProduct.name} fill className="object-cover" unoptimized />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                              <ImageIcon className="h-5 w-5" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
 
-            <aside className="min-w-0 overflow-y-auto pr-1 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="rounded-3xl border-slate-200 shadow-sm">
-                  <CardContent className="p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Price</p>
-                    <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                      ${selectedProduct.price.toFixed(2)}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="rounded-3xl border-slate-200 shadow-sm">
-                  <CardContent className="p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Stock</p>
-                    <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-                      {selectedProduct.stock}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card className="rounded-3xl border-slate-200 shadow-sm">
-                <CardContent className="space-y-3 p-5">
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Category</p>
-                    <p className="mt-1 break-words text-sm font-semibold text-slate-900">
-                      {selectedProduct.categoryLabel}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Status</p>
-                    <div className="mt-2">
+                    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                      <div className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700">
+                        SKU: {selectedProduct.sku ?? 'Not provided'}
+                      </div>
                       <StatusPill status={selectedProduct.status} />
                     </div>
                   </div>
+                </DialogHeader>
 
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Created at</p>
-                    <p className="mt-1 break-words text-sm font-medium leading-6 text-slate-900">
-{formatDate(selectedProduct.createdAt)}                    </p>
+                <div className="grid min-h-0 flex-1 gap-6 overflow-hidden px-6 py-6 sm:px-8 lg:px-10 xl:grid-cols-[minmax(0,1.25fr)_380px]">
+                  <div className="min-w-0 overflow-y-auto pr-1 space-y-6">
+                    <Card className="overflow-hidden rounded-3xl border-slate-200 bg-slate-50/70 shadow-sm">
+                      <CardContent className="p-5">
+                        <div className="flex h-[320px] items-center justify-center overflow-hidden rounded-[24px] border border-slate-200 bg-slate-100 p-4 sm:h-[380px] lg:h-[420px]">
+                          {selectedProductImages[0]?.url ||
+                          selectedProduct.image ? (
+                            <div className="relative h-full w-full">
+                              <Image
+                                src={
+                                  selectedProductImages[0]?.url ||
+                                  selectedProduct.image
+                                }
+                                alt={selectedProduct.name}
+                                fill
+                                className="object-contain"
+                                unoptimized
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-slate-400">
+                              <ImageIcon className="h-10 w-10" />
+                              <span className="text-sm font-medium">
+                                No product image
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-3xl border-slate-200 shadow-sm">
+                      <CardContent className="p-6">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Description
+                        </p>
+                        <p className="mt-4 text-sm leading-7 text-slate-700">
+                          {selectedProduct.description ||
+                            'No description available.'}
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-3xl border-slate-200 shadow-sm">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg font-semibold text-slate-950">
+                          Image gallery
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {selectedProductImages.length === 0 ? (
+                          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+                            No uploaded images for this product yet.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+                            {selectedProductImages.map((image) => (
+                              <div
+                                key={image.id}
+                                className="relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+                              >
+                                {image.url ? (
+                                  <Image
+                                    src={image.url}
+                                    alt={selectedProduct.name}
+                                    fill
+                                    className="object-cover"
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                                    <ImageIcon className="h-5 w-5" />
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
                   </div>
 
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Updated at</p>
-                    <p className="mt-1 break-words text-sm font-medium leading-6 text-slate-900">
-{formatDate(selectedProduct.updatedAt)}                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </aside>
+                  <aside className="min-w-0 overflow-y-auto pr-1 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <Card className="rounded-3xl border-slate-200 shadow-sm">
+                        <CardContent className="p-5">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            Price
+                          </p>
+                          <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                            ${selectedProduct.price.toFixed(2)}
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="rounded-3xl border-slate-200 shadow-sm">
+                        <CardContent className="p-5">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            Stock
+                          </p>
+                          <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                            {selectedProduct.stock}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <Card className="rounded-3xl border-slate-200 shadow-sm">
+                      <CardContent className="space-y-3 p-5">
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            Category
+                          </p>
+                          <p className="mt-1 break-words text-sm font-semibold text-slate-900">
+                            {selectedProduct.categoryLabel}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            Status
+                          </p>
+                          <div className="mt-2">
+                            <StatusPill status={selectedProduct.status} />
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            Created at
+                          </p>
+                          <p className="mt-1 break-words text-sm font-medium leading-6 text-slate-900">
+                            {formatDate(selectedProduct.createdAt)}{' '}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            Updated at
+                          </p>
+                          <p className="mt-1 break-words text-sm font-medium leading-6 text-slate-900">
+                            {formatDate(selectedProduct.updatedAt)}{' '}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </aside>
+                </div>
+              </>
+            ) : (
+              <div className="p-8">
+                <EmptyState
+                  title="No product selected"
+                  description="Choose a product to inspect its backend-backed details."
+                />
+              </div>
+            )}
           </div>
-        </>
-      ) : (
-        <div className="p-8">
-          <EmptyState
-            title="No product selected"
-            description="Choose a product to inspect its backend-backed details."
-          />
-        </div>
-      )}
-    </div>
-  </DialogContent>
-</Dialog>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardContent className="py-4">
@@ -841,7 +1021,12 @@ export default function ProductsPage() {
                 className={cn(direction === 'rtl' ? 'pr-10' : 'pl-10')}
               />
             </div>
-            <div className={cn('flex items-center gap-2', direction === 'rtl' && 'flex-row-reverse')}>
+            <div
+              className={cn(
+                'flex items-center gap-2',
+                direction === 'rtl' && 'flex-row-reverse',
+              )}
+            >
               <Button variant="outline" size="sm" className="gap-2">
                 <Filter className="h-4 w-4" />
                 {t('common.filter')}
@@ -853,7 +1038,12 @@ export default function ProductsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className={cn('flex items-center gap-2', direction === 'rtl' && 'flex-row-reverse')}>
+          <CardTitle
+            className={cn(
+              'flex items-center gap-2',
+              direction === 'rtl' && 'flex-row-reverse',
+            )}
+          >
             <Package className="h-5 w-5" />
             {`All Products (${filteredProducts.length})`}
           </CardTitle>
@@ -917,24 +1107,41 @@ export default function ProductsPage() {
 
                 <tbody>
                   {filteredProducts.map((product) => (
-                    <tr key={product.id} className="border-b border-border transition-colors hover:bg-secondary/30">
+                    <tr
+                      key={product.id}
+                      className="border-b border-border transition-colors hover:bg-secondary/30"
+                    >
                       <td className="py-4">
-                        <div className={cn('flex items-center gap-3', direction === 'rtl' && 'flex-row-reverse')}>
+                        <div
+                          className={cn(
+                            'flex items-center gap-3',
+                            direction === 'rtl' && 'flex-row-reverse',
+                          )}
+                        >
                           <ProductRowThumbnail product={product} />
                           <div className="space-y-1">
-                            <span className="font-medium text-foreground">{product.name}</span>
-                            <p className="text-xs text-muted-foreground">SKU: {product.sku ?? 'Not provided'}</p>
+                            <span className="font-medium text-foreground">
+                              {product.name}
+                            </span>
+                            <p className="text-xs text-muted-foreground">
+                              SKU: {product.sku ?? 'Not provided'}
+                            </p>
                             <p className="text-sm text-muted-foreground line-clamp-2">
-                              {product.description || 'Open View to see the full product details.'}
+                              {product.description ||
+                                'Open View to see the full product details.'}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="py-4">
-                        <span className="text-muted-foreground">{product.categoryLabel}</span>
+                        <span className="text-muted-foreground">
+                          {product.categoryLabel}
+                        </span>
                       </td>
                       <td className="py-4">
-                        <span className="font-semibold text-foreground">${product.price.toFixed(2)}</span>
+                        <span className="font-semibold text-foreground">
+                          ${product.price.toFixed(2)}
+                        </span>
                       </td>
                       <td className="py-4">
                         <span
@@ -951,7 +1158,12 @@ export default function ProductsPage() {
                         </span>
                       </td>
                       <td className="py-4">
-                        <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', statusColors[product.status])}>
+                        <span
+                          className={cn(
+                            'rounded-full px-2.5 py-1 text-xs font-medium',
+                            statusColors[product.status],
+                          )}
+                        >
                           {product.status === 'active'
                             ? 'Active'
                             : product.status === 'draft'
@@ -962,16 +1174,28 @@ export default function ProductsPage() {
                       <td className="py-4 text-center">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align={direction === 'rtl' ? 'start' : 'end'}>
-                            <DropdownMenuItem className="gap-2" onClick={() => openViewDialog(product.id)}>
+                          <DropdownMenuContent
+                            align={direction === 'rtl' ? 'start' : 'end'}
+                          >
+                            <DropdownMenuItem
+                              className="gap-2"
+                              onClick={() => openViewDialog(product.id)}
+                            >
                               <Eye className="h-4 w-4" />
                               View
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2" onClick={() => openEditDialog(product)}>
+                            <DropdownMenuItem
+                              className="gap-2"
+                              onClick={() => openEditDialog(product)}
+                            >
                               <Edit className="h-4 w-4" />
                               {t('common.edit')}
                             </DropdownMenuItem>
@@ -988,7 +1212,9 @@ export default function ProductsPage() {
                                   toast({
                                     title: 'Unable to delete product',
                                     description:
-                                      deleteError instanceof Error ? deleteError.message : 'Please try again.',
+                                      deleteError instanceof Error
+                                        ? deleteError.message
+                                        : 'Please try again.',
                                     variant: 'destructive',
                                   })
                                 }

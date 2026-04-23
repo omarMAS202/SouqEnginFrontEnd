@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-
 import {
   Eye,
   Filter,
@@ -19,12 +18,7 @@ import {
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/ScreenState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +31,7 @@ import { toast } from '@/hooks/useToast'
 import type { Order } from '@/types/models'
 import { cn } from '@/utils/cn'
 
-import { useOrderMutations, useOrders } from '../hooks/useOrders'
+import { useOrderDetail, useOrderMutations, useOrders } from '../hooks/useOrders'
 
 const statusColors: Record<Order['status'], string> = {
   pending: 'bg-warning/10 text-warning',
@@ -58,7 +52,8 @@ export default function OrdersPage() {
   const { data: orders = [], isLoading, isError, error } = useOrders()
   const { updateOrderStatus } = useOrderMutations()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const { data: selectedOrder, isLoading: isOrderDetailLoading } = useOrderDetail(selectedOrderId)
 
   const filteredOrders = useMemo(
     () =>
@@ -111,7 +106,10 @@ export default function OrdersPage() {
 
   const handleAdvanceStatus = async (order: Order) => {
     const nextStatus = nextStatusMap[order.status]
-    if (!nextStatus) return
+
+    if (!nextStatus) {
+      return
+    }
 
     try {
       await updateOrderStatus.mutateAsync({ orderId: order.id, status: nextStatus })
@@ -267,7 +265,7 @@ export default function OrdersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align={direction === 'rtl' ? 'start' : 'end'}>
-                            <DropdownMenuItem className="gap-2" onClick={() => setSelectedOrder(order)}>
+                            <DropdownMenuItem className="gap-2" onClick={() => setSelectedOrderId(order.id)}>
                               <Eye className="h-4 w-4" />
                               {language === 'ar' ? 'عرض التفاصيل' : 'View details'}
                             </DropdownMenuItem>
@@ -291,11 +289,15 @@ export default function OrdersPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-2xl">
+      <Dialog open={!!selectedOrderId} onOpenChange={(open) => !open && setSelectedOrderId(null)}>
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className={cn('flex items-center gap-2', direction === 'rtl' && 'flex-row-reverse')}>
-              <span>{language === 'ar' ? `الطلب ${selectedOrder?.id}` : `Order ${selectedOrder?.id}`}</span>
+              <span>
+                {language === 'ar'
+                  ? `الطلب ${selectedOrder?.orderNumber ?? selectedOrderId ?? ''}`
+                  : `Order ${selectedOrder?.orderNumber ?? selectedOrderId ?? ''}`}
+              </span>
               {selectedOrder ? (
                 <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium capitalize', statusColors[selectedOrder.status])}>
                   {t(`orders.${selectedOrder.status}`)}
@@ -303,7 +305,9 @@ export default function OrdersPage() {
               ) : null}
             </DialogTitle>
           </DialogHeader>
-          {selectedOrder ? (
+          {isOrderDetailLoading ? (
+            <LoadingState message={t('common.loading')} />
+          ) : selectedOrder ? (
             <div className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-3">
@@ -312,15 +316,15 @@ export default function OrdersPage() {
                   </h3>
                   <div className={cn('flex items-center gap-2 text-sm', direction === 'rtl' && 'flex-row-reverse')}>
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedOrder.customerName}</span>
+                    <span>{selectedOrder.customer.name}</span>
                   </div>
                   <div className={cn('flex items-center gap-2 text-sm', direction === 'rtl' && 'flex-row-reverse')}>
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedOrder.email}</span>
+                    <span>{selectedOrder.customer.email}</span>
                   </div>
                   <div className={cn('flex items-center gap-2 text-sm', direction === 'rtl' && 'flex-row-reverse')}>
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedOrder.phone}</span>
+                    <span>{selectedOrder.customer.phone}</span>
                   </div>
                 </div>
                 <div className="space-y-3">
@@ -329,8 +333,37 @@ export default function OrdersPage() {
                   </h3>
                   <div className={cn('flex items-start gap-2 text-sm', direction === 'rtl' && 'flex-row-reverse')}>
                     <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                    <span>{selectedOrder.address}</span>
+                    <span>
+                      {[
+                        selectedOrder.shippingAddress.addressLine1,
+                        selectedOrder.shippingAddress.addressLine2,
+                        selectedOrder.shippingAddress.city,
+                        selectedOrder.shippingAddress.country,
+                        selectedOrder.shippingAddress.postalCode,
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </span>
                   </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-4">
+                <div className="rounded-lg bg-secondary/30 p-3">
+                  <p className="text-xs text-muted-foreground">Subtotal</p>
+                  <p className="mt-1 font-semibold text-foreground">{formatCurrency(selectedOrder.subtotal)}</p>
+                </div>
+                <div className="rounded-lg bg-secondary/30 p-3">
+                  <p className="text-xs text-muted-foreground">Shipping</p>
+                  <p className="mt-1 font-semibold text-foreground">{formatCurrency(selectedOrder.shippingFee)}</p>
+                </div>
+                <div className="rounded-lg bg-secondary/30 p-3">
+                  <p className="text-xs text-muted-foreground">Discount</p>
+                  <p className="mt-1 font-semibold text-foreground">{formatCurrency(selectedOrder.discount)}</p>
+                </div>
+                <div className="rounded-lg bg-secondary/30 p-3">
+                  <p className="text-xs text-muted-foreground">{language === 'ar' ? 'الدفع' : 'Payment'}</p>
+                  <p className="mt-1 font-semibold text-foreground">{selectedOrder.paymentMethod || '-'}</p>
                 </div>
               </div>
 
@@ -352,17 +385,24 @@ export default function OrdersPage() {
                           <Package className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <div>
-                          <p className="font-medium text-foreground">{item.name}</p>
+                          <p className="font-medium text-foreground">{item.productName}</p>
                           <p className="text-sm text-muted-foreground">
                             {language === 'ar' ? `الكمية: ${item.quantity}` : `Qty: ${item.quantity}`}
                           </p>
                         </div>
                       </div>
-                      <span className="font-semibold text-foreground">{formatCurrency(item.price)}</span>
+                      <span className="font-semibold text-foreground">{formatCurrency(item.lineTotal)}</span>
                     </div>
                   ))}
                 </div>
               </div>
+
+              {selectedOrder.notes ? (
+                <div className="rounded-lg border border-border p-4">
+                  <h3 className="mb-2 font-semibold text-foreground">{language === 'ar' ? 'ملاحظات' : 'Notes'}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedOrder.notes}</p>
+                </div>
+              ) : null}
 
               <div
                 className={cn(

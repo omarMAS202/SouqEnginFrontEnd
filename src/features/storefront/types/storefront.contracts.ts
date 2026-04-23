@@ -63,3 +63,12 @@ export interface StorefrontDraftResponseDto extends DraftResourceMetadata, Audit
 export interface StorefrontCatalogResponseDto extends PaginatedResponseDto<PublicProductDto> {
   store_id: string
 }
+
+export interface PublicStoreSummaryResponseDto extends RequestMetadata {
+  store: {
+    id: string | number
+    name?: string | null
+    subdomain?: string | null
+    description?: string | null
+  }
+}

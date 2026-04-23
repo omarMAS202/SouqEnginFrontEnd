@@ -1,4 +1,7 @@
 import { safeLocalStorageGet, safeLocalStorageSet } from '@/lib/storage'
+import { appConfig } from '@/config/app'
+import { dataSourceMode } from '@/services/data-source'
+import { httpRequest } from '@/services/http-client'
 
 import { fallbackCustomerAccount, fallbackStorefrontRuntime } from '../data/storefront-fallback'
 import {
@@ -14,10 +17,12 @@ import type {
   CheckoutSummary,
   CustomerAccount,
   CustomerOrder,
+  StoreProfile,
   Product,
   StorefrontRuntime,
 } from '../types/storefront.types'
 import { normalizeStorefrontPayload } from '../utils/normalizeStorefrontPayload'
+import type { PublicStoreSummaryResponseDto } from '../types/storefront.contracts'
 
 const runtimeStorageKey = 'souq-storefront-runtime'
 const customerStorageKey = 'souq-storefront-customer'
@@ -147,6 +152,29 @@ export const storefrontService = {
   },
   getPolicyPage(policySlug: string) {
     return Promise.resolve(readRuntime().policies.find((entry) => entry.slug === policySlug) ?? null)
+  },
+  async getPublicStore(subdomain: string): Promise<Pick<StoreProfile, 'id' | 'name' | 'slug' | 'description'>> {
+    if (dataSourceMode === 'backend' && appConfig.apiBaseUrl) {
+      const { data } = await httpRequest<PublicStoreSummaryResponseDto>(`/stores/public/store/${subdomain}/`, {
+        method: 'GET',
+      })
+
+      return {
+        id: String(data.store.id),
+        name: data.store.name ?? 'Store',
+        slug: data.store.subdomain ?? subdomain,
+        description: data.store.description ?? '',
+      }
+    }
+
+    const runtime = readRuntime()
+
+    return {
+      id: runtime.profile.id,
+      name: runtime.profile.name,
+      slug: runtime.profile.slug,
+      description: runtime.profile.description,
+    }
   },
 }
 

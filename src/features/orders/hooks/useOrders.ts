@@ -34,3 +34,13 @@ export function useOrderMutations() {
     }),
   }
 }
+
+export function useOrderDetail(orderId: string | null) {
+  const { currentStoreId } = useAuth()
+
+  return useQuery({
+    queryKey: ['orders', currentStoreId, 'detail', orderId],
+    queryFn: () => ordersService.getById(requireStoreScope(currentStoreId), orderId ?? ''),
+    enabled: !!currentStoreId && !!orderId,
+  })
+}

@@ -281,6 +281,88 @@ export async function updateStoreSettings(storeId: string, settings: StoreSettin
   return clone(settings)
 }
 
+export async function getStoreAppearance(storeId: string) {
+  const db = readDb()
+  const store = db.stores.find((entry) => entry.id === storeId)
+
+  if (!store) {
+    throw new Error('Store not found.')
+  }
+
+  return clone({
+    storeId: store.id,
+    primaryColor: store.theme.primaryColor,
+    backgroundColor: store.theme.backgroundColor,
+    font: store.theme.font,
+    style: store.theme.style,
+    logoUrl: store.theme.logoUrl ?? null,
+  })
+}
+
+export async function updateStoreAppearance(
+  storeId: string,
+  input: {
+    primaryColor: string
+    backgroundColor: string
+    font: string
+    style: string
+    logoUrl?: string | null
+  },
+) {
+  const db = readDb()
+  const store = db.stores.find((entry) => entry.id === storeId)
+
+  if (!store) {
+    throw new Error('Store not found.')
+  }
+
+  store.theme = {
+    ...store.theme,
+    primaryColor: input.primaryColor,
+    backgroundColor: input.backgroundColor,
+    font: input.font,
+    style: input.style,
+    logoUrl: input.logoUrl ?? undefined,
+  }
+
+  writeDb(db)
+
+  return clone({
+    storeId: store.id,
+    primaryColor: store.theme.primaryColor,
+    backgroundColor: store.theme.backgroundColor,
+    font: store.theme.font,
+    style: store.theme.style,
+    logoUrl: store.theme.logoUrl ?? null,
+  })
+}
+
+export async function uploadStoreLogo(storeId: string, fileName: string, alt?: string) {
+  const db = readDb()
+  const store = db.stores.find((entry) => entry.id === storeId)
+
+  if (!store) {
+    throw new Error('Store not found.')
+  }
+
+  const assetId = uid('asset')
+  const url = `/uploads/${assetId}-${fileName}`
+
+  store.theme = {
+    ...store.theme,
+    logoUrl: url,
+  }
+
+  writeDb(db)
+
+  return clone({
+    asset_id: assetId,
+    url,
+    alt: alt ?? null,
+    mime_type: null,
+  })
+}
+
 export function listStoresForUser(user: SessionUser | null) {
   if (!user) return []
   const db = readDb()

@@ -32,6 +32,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from '@/hooks/useToast'
+import { dataSourceMode } from '@/services/data-source'
 import { cn } from '@/utils/cn'
 
 import { useCustomerMutations, useCustomers } from '../hooks/useCustomers'
@@ -41,6 +42,7 @@ export default function CustomersPage() {
   const { t, direction, language } = useLanguage()
   const { data: customers = [], isLoading, isError, error } = useCustomers()
   const { createCustomer } = useCustomerMutations()
+  const canCreateCustomer = dataSourceMode !== 'backend'
   const [searchQuery, setSearchQuery] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
@@ -93,7 +95,11 @@ export default function CustomersPage() {
 
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className={cn('gap-2', direction === 'rtl' && 'flex-row-reverse')}>
+            <Button
+              className={cn('gap-2', direction === 'rtl' && 'flex-row-reverse')}
+              disabled={!canCreateCustomer}
+              title={!canCreateCustomer ? 'Customer create endpoint is not available yet.' : undefined}
+            >
               <Plus className="h-4 w-4" />
               {t('customers.addCustomer')}
             </Button>

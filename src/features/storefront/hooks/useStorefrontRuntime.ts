@@ -64,3 +64,11 @@ export function useStorefrontPolicyPage(policySlug: string) {
     enabled: !!policySlug,
   })
 }
+
+export function usePublicStorefrontStore(subdomain: string) {
+  return useQuery({
+    queryKey: ['storefront', 'public-store', subdomain],
+    queryFn: () => storefrontService.getPublicStore(subdomain),
+    enabled: !!subdomain,
+  })
+}
