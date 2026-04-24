@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { authService } from '@/features/auth/services/auth.service'
 import { requireStoreScope } from '@/features/auth/utils/require-store-scope'
 import type { StoreSettings } from '@/types/models'
 
@@ -56,7 +57,7 @@ export function useStoreDomains() {
 export function useStoreManagementMutations() {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const { currentStoreId, logout } = useAuth()
+  const { user, accessToken, currentStoreId, logout, setCurrentStoreId } = useAuth()
 
   const invalidate = async () => {
     await Promise.all([
@@ -117,6 +118,18 @@ export function useStoreManagementMutations() {
       mutationFn: () => dashboardService.deleteStore(requireStoreScope(currentStoreId)),
       onSuccess: async () => {
         await invalidate()
+        const remainingStores = await authService.listUserStores(user, accessToken)
+        const nextStore =
+          remainingStores.find((store) => store.storeId !== currentStoreId) ??
+          remainingStores[0] ??
+          null
+
+        if (nextStore) {
+          setCurrentStoreId(nextStore.storeId)
+          router.replace('/dashboard')
+          return
+        }
+
         logout()
         router.replace('/login')
       },

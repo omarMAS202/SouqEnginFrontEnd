@@ -28,6 +28,7 @@ function normalizeStoreSummary(store: StoreRecord): StoreSummaryDto {
     owner_id: store.ownerId,
     name: store.name,
     slug: store.url,
+    subdomain: store.subdomain ?? null,
     description: store.description,
     tenant_id: null,
     created_at: null,
@@ -42,6 +43,7 @@ function normalizeBackendStore(store: {
   owner: number
   name: string
   slug: string
+  subdomain?: string | null
   description: string | null
   status: string
   tenant_id: number | null
@@ -54,6 +56,7 @@ function normalizeBackendStore(store: {
     owner_id: String(store.owner),
     name: store.name,
     slug: store.slug,
+    subdomain: store.subdomain ?? null,
     description: store.description,
     tenant_id: store.tenant_id !== null ? String(store.tenant_id) : null,
     created_at: store.created_at,
@@ -90,6 +93,7 @@ async function fetchStores(accessToken: string) {
       owner: number
       name: string
       slug: string
+      subdomain?: string | null
       description: string | null
       status: string
       tenant_id: number | null
@@ -246,6 +250,7 @@ export const authService = {
             owner_id: user?.id ?? '',
             name: selectedStore.name,
             slug: selectedStore.slug,
+            subdomain: selectedStore.subdomain ?? null,
             description: selectedStore.description ?? null,
             tenant_id: selectedStore.tenantId,
             created_at: null,
@@ -260,6 +265,7 @@ export const authService = {
         owner_id: user?.id ?? '',
         name: store.name,
         slug: store.slug,
+        subdomain: store.subdomain ?? null,
         description: store.description ?? null,
         tenant_id: store.tenantId,
         created_at: null,

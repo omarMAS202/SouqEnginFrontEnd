@@ -67,6 +67,11 @@ export default function SettingsPage() {
   const [slugCheckResult, setSlugCheckResult] = useState<{ slug: string; available: boolean } | null>(null)
   const [slugSuggestions, setSlugSuggestions] = useState<string[]>([])
   const currentStore = storeBootstrap?.store ?? null
+  const canSavePageSettings =
+    activeSection === 'general' ||
+    activeSection === 'localization' ||
+    activeSection === 'notifications' ||
+    activeSection === 'security'
 
   useEffect(() => {
     if (data) {
@@ -85,7 +90,7 @@ export default function SettingsPage() {
       description: currentStore.description ?? '',
       status: currentStore.status ?? 'draft',
     })
-    setSubdomain(currentStore.slug)
+    setSubdomain(currentStore.subdomain ?? '')
   }, [currentStore])
 
   useEffect(() => {
@@ -749,8 +754,8 @@ export default function SettingsPage() {
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {language === 'ar'
-                    ? 'حذف المتجر سيؤدي إلى إنهاء الجلسة الحالية.'
-                    : 'Deleting the current store will end the current session.'}
+                    ? 'إذا كان لديك متجر آخر سنحوّلك إليه، وإلا ستنتهي الجلسة الحالية.'
+                    : 'If you own another store, you will be switched to it. Otherwise, the current session will end.'}
                 </p>
               </div>
               <Button variant="destructive" onClick={() => void handleDeleteStore()} disabled={storeMutations.deleteStore.isPending}>
@@ -774,14 +779,16 @@ export default function SettingsPage() {
             {language === 'ar' ? 'إدارة إعدادات وربط ونشر المتجر' : 'Manage store settings, domains, and publishing'}
           </p>
         </div>
-        <Button
-          onClick={() => void handleSaveSettings()}
-          disabled={saveSettings.isPending}
-          className={cn('gap-2', direction === 'rtl' && 'flex-row-reverse')}
-        >
-          <Save className="h-4 w-4" />
-          {saveSettings.isPending ? (language === 'ar' ? 'جارٍ الحفظ...' : 'Saving...') : t('common.save')}
-        </Button>
+        {canSavePageSettings ? (
+          <Button
+            onClick={() => void handleSaveSettings()}
+            disabled={saveSettings.isPending}
+            className={cn('gap-2', direction === 'rtl' && 'flex-row-reverse')}
+          >
+            <Save className="h-4 w-4" />
+            {saveSettings.isPending ? (language === 'ar' ? 'جارٍ الحفظ...' : 'Saving...') : t('common.save')}
+          </Button>
+        ) : null}
       </div>
 
       {currentStore ? (
@@ -793,6 +800,10 @@ export default function SettingsPage() {
           <div className="rounded-xl border border-border bg-card p-4">
             <p className="text-sm text-muted-foreground">Slug</p>
             <p className="mt-1 font-semibold text-foreground">{currentStore.slug}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-sm text-muted-foreground">Subdomain</p>
+            <p className="mt-1 font-semibold text-foreground">{currentStore.subdomain || '—'}</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-4">
             <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الحالة' : 'Status'}</p>

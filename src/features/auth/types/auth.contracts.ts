@@ -42,6 +42,7 @@ export interface StoreSummaryDto extends StoreScopedResource {
   owner_id: string
   name: string
   slug: string
+  subdomain?: string | null
   description?: string | null
   tenant_id: string | null
   created_at?: string | null
@@ -61,6 +62,7 @@ export interface StoreSelectorItem {
   storeId: string
   name: string
   slug: string
+  subdomain?: string | null
   description?: string
   tenantId: string | null
   url: string
@@ -109,6 +111,7 @@ export function normalizeStoreSelectorItem(dto: StoreSummaryDto): StoreSelectorI
     storeId: dto.store_id,
     name: dto.name,
     slug: dto.slug,
+    subdomain: dto.subdomain ?? null,
     description: dto.description ?? undefined,
     tenantId: dto.tenant_id,
     url: dto.url,
