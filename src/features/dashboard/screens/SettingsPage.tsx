@@ -1,7 +1,7 @@
 'use client'
 
-import { Bell, Globe, Mail, Save, Shield, Store, Globe2, Rocket, Trash2, RefreshCw, CheckCircle2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Bell, Globe, Globe2, Mail, Rocket, Save, Shield, Store, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/ScreenState'
 import { Button } from '@/components/ui/button'
@@ -68,6 +68,13 @@ export default function SettingsPage() {
   const [slugSuggestions, setSlugSuggestions] = useState<string[]>([])
   const currentStore = storeBootstrap?.store ?? null
   const domainList = domains ?? []
+  const settingsDirtyRef = useRef(false)
+  const storeDraftDirtyRef = useRef(false)
+  const subdomainDirtyRef = useRef(false)
+  const dirtyDomainIdsRef = useRef<Record<string, true>>({})
+  const hydratedSettingsStoreIdRef = useRef<string | null>(null)
+  const hydratedStoreIdRef = useRef<string | null>(null)
+  const hydratedDomainsStoreIdRef = useRef<string | null>(null)
   const canSavePageSettings =
     activeSection === 'general' ||
     activeSection === 'localization' ||
@@ -75,23 +82,48 @@ export default function SettingsPage() {
     activeSection === 'security'
 
   useEffect(() => {
-    if (data) {
-      setSettings(data)
+    if (!data) {
+      return
     }
-  }, [data])
+
+    const storeId = currentStore?.store_id ?? null
+    const storeChanged = hydratedSettingsStoreIdRef.current !== storeId
+
+    if (storeChanged || !settingsDirtyRef.current) {
+      setSettings(data)
+      hydratedSettingsStoreIdRef.current = storeId
+    }
+  }, [currentStore?.store_id, data])
 
   useEffect(() => {
     if (!currentStore) {
       return
     }
 
-    setStoreDraft({
-      name: currentStore.name,
-      slug: currentStore.slug,
-      description: currentStore.description ?? '',
-      status: currentStore.status ?? 'draft',
-    })
-    setSubdomain(currentStore.subdomain ?? '')
+    const storeId = currentStore.store_id
+    const storeChanged = hydratedStoreIdRef.current !== storeId
+
+    if (storeChanged || !storeDraftDirtyRef.current) {
+      setStoreDraft({
+        name: currentStore.name,
+        slug: currentStore.slug,
+        description: currentStore.description ?? '',
+        status: currentStore.status ?? 'draft',
+      })
+    }
+
+    if (storeChanged || !subdomainDirtyRef.current) {
+      setSubdomain(currentStore.subdomain ?? '')
+    }
+
+    if (storeChanged) {
+      storeDraftDirtyRef.current = false
+      subdomainDirtyRef.current = false
+      setSlugCheckResult(null)
+      setSlugSuggestions([])
+    }
+
+    hydratedStoreIdRef.current = storeId
   }, [currentStore])
 
   useEffect(() => {
@@ -99,18 +131,71 @@ export default function SettingsPage() {
       return
     }
 
-    setDomainDrafts(
-      Object.fromEntries(
+    const storeId = currentStore?.store_id ?? null
+    const storeChanged = hydratedDomainsStoreIdRef.current !== storeId
+    const nextDrafts = Object.fromEntries(
+      domains.map((domain) => [
+        domain.id,
+        {
+          domain: domain.domain,
+          isPrimary: domain.isPrimary,
+        },
+      ]),
+    ) as Record<string, DomainDraft>
+
+    setDomainDrafts((current) => {
+      if (storeChanged) {
+        return nextDrafts
+      }
+
+      return Object.fromEntries(
         domains.map((domain) => [
           domain.id,
-          {
-            domain: domain.domain,
-            isPrimary: domain.isPrimary,
-          },
+          dirtyDomainIdsRef.current[domain.id] && current[domain.id]
+            ? current[domain.id]
+            : nextDrafts[domain.id],
         ]),
-      ),
-    )
-  }, [domains])
+      )
+    })
+
+    if (storeChanged) {
+      dirtyDomainIdsRef.current = {}
+    }
+
+    hydratedDomainsStoreIdRef.current = storeId
+  }, [currentStore?.store_id, domains])
+
+  const updateSettingsField = <K extends keyof StoreSettings>(key: K, value: StoreSettings[K]) => {
+    settingsDirtyRef.current = true
+    setSettings((current) => (current ? { ...current, [key]: value } : current))
+  }
+
+  const updateStoreDraftField = <K extends keyof StoreDraft>(key: K, value: StoreDraft[K]) => {
+    storeDraftDirtyRef.current = true
+
+    if (key === 'name') {
+      setSlugSuggestions([])
+    }
+
+    if (key === 'slug') {
+      setSlugCheckResult(null)
+    }
+
+    setStoreDraft((current) => (current ? { ...current, [key]: value } : current))
+  }
+
+  const updateSubdomainDraft = (value: string) => {
+    subdomainDirtyRef.current = true
+    setSubdomain(value)
+  }
+
+  const updateDomainDraft = (domainId: string, value: DomainDraft) => {
+    dirtyDomainIdsRef.current[domainId] = true
+    setDomainDrafts((current) => ({
+      ...current,
+      [domainId]: value,
+    }))
+  }
 
   if (isLoading) {
     return <LoadingState message={t('common.loading')} />
@@ -140,7 +225,9 @@ export default function SettingsPage() {
 
   const handleSaveSettings = async () => {
     try {
-      await saveSettings.mutateAsync(settings)
+      const savedSettings = await saveSettings.mutateAsync(settings)
+      settingsDirtyRef.current = false
+      setSettings(savedSettings)
       toast({
         title: language === 'ar' ? 'تم حفظ الإعدادات' : 'Settings saved',
         description:
@@ -163,11 +250,18 @@ export default function SettingsPage() {
     }
 
     try {
-      await storeMutations.patchStore.mutateAsync({
+      const savedStore = await storeMutations.patchStore.mutateAsync({
         name: storeDraft.name,
         slug: storeDraft.slug,
         description: storeDraft.description,
         status: storeDraft.status,
+      })
+      storeDraftDirtyRef.current = false
+      setStoreDraft({
+        name: savedStore.name,
+        slug: savedStore.slug,
+        description: savedStore.description,
+        status: savedStore.status,
       })
 
       toast({
@@ -222,7 +316,10 @@ export default function SettingsPage() {
 
   const handleSetSubdomain = async () => {
     try {
-      await storeMutations.setSubdomain.mutateAsync(subdomain.trim())
+      const nextSubdomain = subdomain.trim()
+      const savedSubdomain = await storeMutations.setSubdomain.mutateAsync(nextSubdomain)
+      subdomainDirtyRef.current = false
+      setSubdomain(savedSubdomain || nextSubdomain)
       toast({
         title: language === 'ar' ? 'تم تحديث الـ subdomain' : 'Subdomain updated',
         description:
@@ -296,14 +393,36 @@ export default function SettingsPage() {
       return
     }
 
+    const trimmedDomain = draft.domain.trim()
+
+    if (!trimmedDomain) {
+      toast({
+        title: language === 'ar' ? 'Ø§Ù„Ø¯ÙˆÙ…ÙŠÙ† Ù…Ø·Ù„ÙˆØ¨' : 'Domain is required',
+        description:
+          language === 'ar'
+            ? 'Ø£Ø¯Ø®Ù„ Ø§Ø³Ù… Ø¯ÙˆÙ…ÙŠÙ† ØµØ§Ù„Ø­ Ù‚Ø¨Ù„ Ø§Ù„Ø­ÙØ¸.'
+            : 'Enter a valid domain name before saving.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     try {
-      await storeMutations.patchDomain.mutateAsync({
+      const updatedDomain = await storeMutations.patchDomain.mutateAsync({
         domainId,
         input: {
-          domain: draft.domain.trim(),
+          domain: trimmedDomain,
           isPrimary: draft.isPrimary,
         },
       })
+      delete dirtyDomainIdsRef.current[domainId]
+      setDomainDrafts((current) => ({
+        ...current,
+        [domainId]: {
+          domain: updatedDomain.domain,
+          isPrimary: updatedDomain.isPrimary,
+        },
+      }))
 
       toast({
         title: language === 'ar' ? 'تم تحديث الدومين' : 'Domain updated',
@@ -375,6 +494,7 @@ export default function SettingsPage() {
       domain: domain.domain,
       isPrimary: domain.isPrimary,
     }
+    const isDomainDraftValid = draft.domain.trim().length > 0
 
     return (
       <div
@@ -388,26 +508,20 @@ export default function SettingsPage() {
           <Input
             value={draft.domain}
             onChange={(event) =>
-              setDomainDrafts((current) => ({
-                ...current,
-                [domain.id]: {
-                  ...draft,
-                  domain: event.target.value,
-                },
-              }))
+              updateDomainDraft(domain.id, {
+                ...draft,
+                domain: event.target.value,
+              })
             }
           />
           <div className={cn('flex items-center gap-2 rounded-lg border border-border px-3', direction === 'rtl' && 'flex-row-reverse')}>
             <Switch
               checked={draft.isPrimary}
               onCheckedChange={(checked) =>
-                setDomainDrafts((current) => ({
-                  ...current,
-                  [domain.id]: {
-                    ...draft,
-                    isPrimary: checked,
-                  },
-                }))
+                updateDomainDraft(domain.id, {
+                  ...draft,
+                  isPrimary: checked,
+                })
               }
             />
             <span className="text-sm text-muted-foreground">
@@ -415,7 +529,7 @@ export default function SettingsPage() {
             </span>
           </div>
           <div className={cn('flex gap-2', direction === 'rtl' && 'flex-row-reverse')}>
-            <Button variant="outline" onClick={() => void handleUpdateDomain(domain.id)}>
+            <Button variant="outline" onClick={() => void handleUpdateDomain(domain.id)} disabled={!isDomainDraftValid}>
               {language === 'ar' ? 'حفظ' : 'Save'}
             </Button>
             <Button variant="destructive" onClick={() => void handleDeleteDomain(domain.id)}>
@@ -424,7 +538,7 @@ export default function SettingsPage() {
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          {domain.isPrimary
+          {draft.isPrimary
             ? language === 'ar'
               ? 'هذا هو الدومين الأساسي الحالي.'
               : 'This is currently the primary domain.'
@@ -443,7 +557,7 @@ export default function SettingsPage() {
               <Label className={cn(direction === 'rtl' && 'block text-right')}>{t('settings.storeName')}</Label>
               <Input
                 value={settings.storeName}
-                onChange={(event) => setSettings({ ...settings, storeName: event.target.value })}
+                onChange={(event) => updateSettingsField('storeName', event.target.value)}
                 className={cn(direction === 'rtl' && 'text-right')}
               />
             </div>
@@ -451,7 +565,7 @@ export default function SettingsPage() {
               <Label className={cn(direction === 'rtl' && 'block text-right')}>{t('settings.storeUrl')}</Label>
               <Input
                 value={settings.storeUrl}
-                onChange={(event) => setSettings({ ...settings, storeUrl: event.target.value })}
+                onChange={(event) => updateSettingsField('storeUrl', event.target.value)}
                 className={cn(direction === 'rtl' && 'text-right')}
               />
             </div>
@@ -462,7 +576,7 @@ export default function SettingsPage() {
               <Textarea
                 rows={3}
                 value={settings.storeDescription}
-                onChange={(event) => setSettings({ ...settings, storeDescription: event.target.value })}
+                onChange={(event) => updateSettingsField('storeDescription', event.target.value)}
                 className={cn(direction === 'rtl' && 'text-right')}
               />
             </div>
@@ -479,7 +593,7 @@ export default function SettingsPage() {
                   <Input
                     type="email"
                     value={settings.storeEmail}
-                    onChange={(event) => setSettings({ ...settings, storeEmail: event.target.value })}
+                    onChange={(event) => updateSettingsField('storeEmail', event.target.value)}
                     className={cn(direction === 'rtl' ? 'pr-9 text-right' : 'pl-9')}
                   />
                 </div>
@@ -489,7 +603,7 @@ export default function SettingsPage() {
                 <Input
                   type="tel"
                   value={settings.storePhone}
-                  onChange={(event) => setSettings({ ...settings, storePhone: event.target.value })}
+                  onChange={(event) => updateSettingsField('storePhone', event.target.value)}
                   className={cn(direction === 'rtl' && 'text-right')}
                 />
               </div>
@@ -501,7 +615,7 @@ export default function SettingsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>{t('settings.currency')}</Label>
-              <Select value={settings.currency} onValueChange={(value) => setSettings({ ...settings, currency: value })}>
+              <Select value={settings.currency} onValueChange={(value) => updateSettingsField('currency', value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -515,7 +629,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label>{t('settings.timezone')}</Label>
-              <Select value={settings.timezone} onValueChange={(value) => setSettings({ ...settings, timezone: value })}>
+              <Select value={settings.timezone} onValueChange={(value) => updateSettingsField('timezone', value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -529,7 +643,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label>{language === 'ar' ? 'اللغة' : 'Language'}</Label>
-              <Select value={settings.language} onValueChange={(value: 'en' | 'ar') => setSettings({ ...settings, language: value })}>
+              <Select value={settings.language} onValueChange={(value: 'en' | 'ar') => updateSettingsField('language', value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -556,7 +670,7 @@ export default function SettingsPage() {
                 <p className="font-medium">{label}</p>
                 <Switch
                   checked={settings[key as keyof StoreSettings] as boolean}
-                  onCheckedChange={(checked) => setSettings({ ...settings, [key]: checked })}
+                  onCheckedChange={(checked) => updateSettingsField(key as keyof StoreSettings, checked)}
                 />
               </div>
             ))}
@@ -585,12 +699,12 @@ export default function SettingsPage() {
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <Label>{language === 'ar' ? 'اسم المتجر' : 'Store name'}</Label>
-                  <Input value={storeDraft.name} onChange={(event) => setStoreDraft({ ...storeDraft, name: event.target.value })} />
+                  <Input value={storeDraft.name} onChange={(event) => updateStoreDraftField('name', event.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label>Slug</Label>
                   <div className="flex gap-2">
-                    <Input value={storeDraft.slug} onChange={(event) => setStoreDraft({ ...storeDraft, slug: event.target.value })} />
+                    <Input value={storeDraft.slug} onChange={(event) => updateStoreDraftField('slug', event.target.value)} />
                     <Button variant="outline" onClick={() => void handleCheckSlug()}>
                       {language === 'ar' ? 'فحص' : 'Check'}
                     </Button>
@@ -614,7 +728,7 @@ export default function SettingsPage() {
                       {slugSuggestions.map((suggestion) => (
                         <button
                           key={suggestion}
-                          onClick={() => setStoreDraft({ ...storeDraft, slug: suggestion })}
+                          onClick={() => updateStoreDraftField('slug', suggestion)}
                           className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:border-primary hover:text-foreground"
                         >
                           {suggestion}
@@ -628,14 +742,14 @@ export default function SettingsPage() {
                   <Textarea
                     rows={3}
                     value={storeDraft.description}
-                    onChange={(event) => setStoreDraft({ ...storeDraft, description: event.target.value })}
+                    onChange={(event) => updateStoreDraftField('description', event.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>{language === 'ar' ? 'الحالة' : 'Status'}</Label>
                   <Select
                     value={storeDraft.status}
-                    onValueChange={(value: StoreDraft['status']) => setStoreDraft({ ...storeDraft, status: value })}
+                    onValueChange={(value: StoreDraft['status']) => updateStoreDraftField('status', value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -666,7 +780,7 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <Label>Subdomain</Label>
                   <div className="flex gap-2">
-                    <Input value={subdomain} onChange={(event) => setSubdomain(event.target.value)} />
+                    <Input value={subdomain} onChange={(event) => updateSubdomainDraft(event.target.value)} />
                     <Button variant="outline" onClick={() => void handleSetSubdomain()} disabled={storeMutations.setSubdomain.isPending}>
                       {language === 'ar' ? 'حفظ' : 'Save'}
                     </Button>
@@ -748,7 +862,7 @@ export default function SettingsPage() {
               </div>
               <Switch
                 checked={settings.twoFactorAuth}
-                onCheckedChange={(checked) => setSettings({ ...settings, twoFactorAuth: checked })}
+                onCheckedChange={(checked) => updateSettingsField('twoFactorAuth', checked)}
               />
             </div>
 
