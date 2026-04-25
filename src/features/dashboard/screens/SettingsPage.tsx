@@ -53,7 +53,7 @@ export default function SettingsPage() {
   const { t, direction, language } = useLanguage()
   const { data, isLoading, isError, error } = useStoreSettings()
   const { data: storeBootstrap } = useCurrentStoreBootstrap()
-  const { data: domains = [], isLoading: domainsLoading } = useStoreDomains()
+  const { data: domains, isLoading: domainsLoading } = useStoreDomains()
   const saveSettings = useStoreSettingsMutation()
   const storeMutations = useStoreManagementMutations()
 
@@ -67,6 +67,7 @@ export default function SettingsPage() {
   const [slugCheckResult, setSlugCheckResult] = useState<{ slug: string; available: boolean } | null>(null)
   const [slugSuggestions, setSlugSuggestions] = useState<string[]>([])
   const currentStore = storeBootstrap?.store ?? null
+  const domainList = domains ?? []
   const canSavePageSettings =
     activeSection === 'general' ||
     activeSection === 'localization' ||
@@ -94,6 +95,10 @@ export default function SettingsPage() {
   }, [currentStore])
 
   useEffect(() => {
+    if (!domains) {
+      return
+    }
+
     setDomainDrafts(
       Object.fromEntries(
         domains.map((domain) => [
@@ -714,7 +719,7 @@ export default function SettingsPage() {
             <div className="space-y-3">
               {domainsLoading ? (
                 <LoadingState message={t('common.loading')} />
-              ) : domains.length === 0 ? (
+              ) : domainList.length === 0 ? (
                 <EmptyState
                   title={language === 'ar' ? 'لا توجد دومينات بعد' : 'No domains yet'}
                   description={
@@ -724,7 +729,7 @@ export default function SettingsPage() {
                   }
                 />
               ) : (
-                domains.map((domain) => renderDomainRow(domain))
+                domainList.map((domain) => renderDomainRow(domain))
               )}
             </div>
           </div>
@@ -811,7 +816,7 @@ export default function SettingsPage() {
           </div>
           <div className="rounded-xl border border-border bg-card p-4">
             <p className="text-sm text-muted-foreground">{language === 'ar' ? 'الدومينات' : 'Domains'}</p>
-            <p className="mt-1 font-semibold text-foreground">{domains.length}</p>
+            <p className="mt-1 font-semibold text-foreground">{domainList.length}</p>
           </div>
         </div>
       ) : null}
