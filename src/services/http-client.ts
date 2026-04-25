@@ -57,9 +57,9 @@ export async function httpRequest<T>(
     const message =
       typeof body === 'object' &&
       body !== null &&
-      'detail' in body &&
-      typeof body.detail === 'string'
-        ? body.detail
+      (('detail' in body && typeof body.detail === 'string' && body.detail) ||
+        ('error' in body && typeof body.error === 'string' && body.error))
+        ? String(('detail' in body && typeof body.detail === 'string' && body.detail) || ('error' in body && typeof body.error === 'string' && body.error) || '')
         : `Request failed with status ${response.status}.`
 
     throw new ApiError(message, response.status, body)

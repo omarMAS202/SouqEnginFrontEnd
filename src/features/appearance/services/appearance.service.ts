@@ -170,18 +170,18 @@ export const appearanceService = {
     }
 
     const accessToken = getAccessToken()
-    const { data } = await httpRequest<StoreThemeDto>(`/stores/${storeId}/theme/`, {
-      method: 'PATCH',
-      accessToken,
-      body: JSON.stringify({
-        theme_template: input.themeTemplate ?? null,
-        primary_color: input.primaryColor,
-        secondary_color: input.secondaryColor,
-        font_family: input.fontFamily,
-        logo_url: input.logoUrl ?? null,
-        banner_url: input.bannerUrl ?? null,
-      }),
-    })
+      const { data } = await httpRequest<StoreThemeDto>(`/stores/${storeId}/theme/`, {
+        method: 'PATCH',
+        accessToken,
+        body: JSON.stringify({
+          theme_template: input.themeTemplate ?? null,
+          primary_color: input.primaryColor,
+          secondary_color: input.secondaryColor,
+          font_family: input.fontFamily,
+          logo_url: input.logoUrl ?? '',
+          banner_url: input.bannerUrl ?? '',
+        }),
+      })
 
     return normalizeStoreTheme(data)
   },

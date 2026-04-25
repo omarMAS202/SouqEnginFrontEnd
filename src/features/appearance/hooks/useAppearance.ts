@@ -25,6 +25,8 @@ export function useAppearanceMutations() {
   const invalidate = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ['appearance', currentStoreId] }),
+      queryClient.invalidateQueries({ queryKey: ['appearance', currentStoreId, 'theme'] }),
+      queryClient.invalidateQueries({ queryKey: ['appearance', currentStoreId, 'theme-templates'] }),
     ])
 
   return {

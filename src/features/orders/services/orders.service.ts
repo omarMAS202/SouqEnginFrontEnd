@@ -64,7 +64,7 @@ export const ordersService = {
     if (dataSourceMode === 'backend' && appConfig.apiBaseUrl) {
       const accessToken = getAccessToken()
 
-      const { data } = await httpRequest<{ order: OrderRecordDto }>(`/stores/${storeId}/orders/${orderId}/`, {
+      const { data } = await httpRequest<{ order: OrderRecordDto }>(`/stores/${storeId}/orders/${orderId}/status/`, {
         method: 'PATCH',
         accessToken,
         body: JSON.stringify({ status }),

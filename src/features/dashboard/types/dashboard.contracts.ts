@@ -88,7 +88,7 @@ export interface StoreRecordResponseDto {
   name?: string | null
   slug?: string | null
   description?: string | null
-  status?: 'active' | 'suspended' | 'draft' | 'setup' | null
+  status?: 'active' | 'inactive' | 'draft' | 'setup' | null
   tenant_id?: number | string | null
   created_at?: string | null
   updated_at?: string | null
@@ -100,7 +100,7 @@ export interface StoreRecordModel {
   name: string
   slug: string
   description: string
-  status: 'active' | 'suspended' | 'draft' | 'setup'
+  status: 'active' | 'inactive' | 'draft' | 'setup'
   tenantId: string | null
   createdAt: string | null
   updatedAt: string | null
@@ -110,14 +110,14 @@ export interface UpdateStoreRequestDto {
   name: string
   slug: string
   description: string
-  status: 'active' | 'suspended' | 'draft' | 'setup'
+  status: 'active' | 'inactive' | 'draft' | 'setup'
 }
 
 export interface PatchStoreRequestDto {
   name?: string
   slug?: string
   description?: string
-  status?: 'active' | 'suspended' | 'draft' | 'setup'
+  status?: 'active' | 'inactive' | 'draft' | 'setup'
 }
 
 export interface StoreDomainDto {

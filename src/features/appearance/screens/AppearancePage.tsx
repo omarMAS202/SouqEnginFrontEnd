@@ -20,14 +20,21 @@ import { toast } from '@/hooks/useToast'
 import { useLanguage } from '@/features/localization'
 import { cn } from '@/utils/cn'
 
-import { useAppearance, useAppearanceMutations } from '../hooks/useAppearance'
+import { useAppearance, useAppearanceMutations, useThemeTemplates } from '../hooks/useAppearance'
 
-const themes = [
-  { id: 'modern', name: 'Modern', description: 'Clean and minimal design', color: '#4F46E5' },
-  { id: 'elegant', name: 'Elegant', description: 'Sophisticated and luxurious', color: '#BE185D' },
-  { id: 'natural', name: 'Natural', description: 'Organic and earthy tones', color: '#16A34A' },
-  { id: 'bold', name: 'Bold', description: 'Vibrant and eye-catching', color: '#DC2626' },
-]
+const themeVisualPresets: Record<string, { description: string; color: string }> = {
+  modern: { description: 'Clean and minimal design', color: '#4F46E5' },
+  elegant: { description: 'Sophisticated and luxurious', color: '#BE185D' },
+  natural: { description: 'Organic and earthy tones', color: '#16A34A' },
+  bold: { description: 'Vibrant and eye-catching', color: '#DC2626' },
+  minimal: { description: 'Simple and focused layout', color: '#0F766E' },
+  classic: { description: 'Balanced and traditional storefront', color: '#A16207' },
+}
+
+const themeDisplayAliases: Record<string, string> = {
+  classic: 'elegant',
+  minimal: 'natural',
+}
 
 const fonts = [
   { id: 'inter', name: 'Inter', preview: 'The quick brown fox' },
@@ -39,8 +46,14 @@ const fonts = [
 export default function AppearancePage() {
   const { t, direction, language } = useLanguage()
   const { data, isLoading, isError, error } = useAppearance()
-  const { updateAppearance, uploadLogo } = useAppearanceMutations()
-  const [selectedTheme, setSelectedTheme] = useState('modern')
+  const {
+    data: themeTemplates = [],
+    isLoading: templatesLoading,
+    isError: templatesError,
+    error: templatesErrorDetails,
+  } = useThemeTemplates()
+  const { updateTheme, uploadLogo } = useAppearanceMutations()
+  const [selectedThemeId, setSelectedThemeId] = useState('')
   const [selectedFont, setSelectedFont] = useState('inter')
   const [primaryColor, setPrimaryColor] = useState('#4F46E5')
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF')
@@ -53,46 +66,81 @@ export default function AppearancePage() {
       return
     }
 
-    setSelectedTheme(data.style)
     setSelectedFont(data.font)
     setPrimaryColor(data.primaryColor)
     setBackgroundColor(data.backgroundColor)
     setLogoUrl(data.logoUrl)
   }, [data])
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!themeTemplates.length) {
+      return
+    }
+
+    const normalizedStyle = data?.style?.trim().toLowerCase()
+    const matchedTemplate =
+      themeTemplates.find((template) => template.name.trim().toLowerCase() === normalizedStyle) ??
+      themeTemplates[0]
+
+    setSelectedThemeId((current) => current || matchedTemplate.id)
+  }, [data?.style, themeTemplates])
+
+  const themes = themeTemplates.map((template) => {
+    const normalizedName = template.name.trim().toLowerCase()
+    const displayKey = themeDisplayAliases[normalizedName] ?? normalizedName
+    const preset = themeVisualPresets[displayKey] ?? themeVisualPresets[normalizedName]
+
+    return {
+      id: template.id,
+      name: displayKey.charAt(0).toUpperCase() + displayKey.slice(1),
+      description: template.description || preset?.description || 'Storefront theme template',
+      color: preset?.color || '#4F46E5',
+    }
+  })
+
+  if (isLoading || templatesLoading) {
     return <LoadingState message={t('common.loading')} />
   }
 
-  if (isError) {
+  if (isError || templatesError) {
     return (
       <ErrorState
         title={language === 'ar' ? 'تعذر تحميل إعدادات المظهر' : 'Could not load appearance settings'}
-        description={error instanceof Error ? error.message : undefined}
+        description={
+          error instanceof Error
+            ? error.message
+            : templatesErrorDetails instanceof Error
+              ? templatesErrorDetails.message
+              : undefined
+        }
       />
     )
   }
 
-  if (!data) {
+  if (!data || themes.length === 0) {
     return (
       <EmptyState
         title={language === 'ar' ? 'لا توجد إعدادات مظهر بعد' : 'No appearance settings yet'}
         description={
           language === 'ar'
             ? 'ستظهر إعدادات المظهر هنا بعد ربط المتجر.'
-            : 'Appearance settings will appear here once the store is connected.'
+            : 'Appearance settings will appear here once the store and theme templates are available.'
         }
       />
     )
   }
 
   const handleSave = async () => {
+    if (!selectedThemeId) {
+      return
+    }
+
     try {
-      await updateAppearance.mutateAsync({
+      await updateTheme.mutateAsync({
+        themeTemplate: selectedThemeId,
         primaryColor,
-        backgroundColor,
-        font: selectedFont,
-        style: selectedTheme,
+        secondaryColor: backgroundColor,
+        fontFamily: selectedFont,
         logoUrl,
       })
 
@@ -157,7 +205,7 @@ export default function AppearancePage() {
           <h1 className="text-3xl font-bold text-foreground">{t('appearance.title')}</h1>
           <p className="text-muted-foreground">Customize your store&apos;s look and feel</p>
         </div>
-        <Button className="gap-2" onClick={() => void handleSave()} disabled={updateAppearance.isPending}>
+        <Button className="gap-2" onClick={() => void handleSave()} disabled={updateTheme.isPending}>
           <Check className="h-4 w-4" />
           {t('common.save')}
         </Button>
@@ -178,17 +226,17 @@ export default function AppearancePage() {
                   <button
                     key={theme.id}
                     onClick={() => {
-                      setSelectedTheme(theme.id)
+                      setSelectedThemeId(theme.id)
                       setPrimaryColor(theme.color)
                     }}
                     className={cn(
                       'relative rounded-xl border-2 p-4 text-start transition-all',
-                      selectedTheme === theme.id
+                      selectedThemeId === theme.id
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/30',
                     )}
                   >
-                    {selectedTheme === theme.id ? (
+                    {selectedThemeId === theme.id ? (
                       <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
                         <Check className="h-3 w-3 text-primary-foreground" />
                       </div>

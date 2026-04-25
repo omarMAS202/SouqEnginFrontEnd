@@ -48,7 +48,7 @@ export interface StoreSummaryDto extends StoreScopedResource {
   created_at?: string | null
   updated_at?: string | null
   url: string
-  status?: 'active' | 'suspended' | 'draft' | 'setup' | null
+  status?: 'active' | 'inactive' | 'draft' | 'setup' | null
 }
 
 export interface StoreBootstrapResponseDto extends RequestMetadata {
@@ -66,7 +66,7 @@ export interface StoreSelectorItem {
   description?: string
   tenantId: string | null
   url: string
-  status: 'active' | 'suspended' | 'draft' | 'setup'
+  status: 'active' | 'inactive' | 'draft' | 'setup'
 }
 
 export interface AuthSessionModel {

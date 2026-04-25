@@ -28,7 +28,7 @@ export interface StoreRecord {
   name: string
   url: string
   description: string
-  status: 'active' | 'suspended' | 'draft' | 'setup'
+  status: 'active' | 'inactive' | 'draft' | 'setup'
   ownerId: string
   theme: StoreTheme
   subdomain?: string

@@ -41,7 +41,7 @@ type StoreDraft = {
   name: string
   slug: string
   description: string
-  status: 'active' | 'suspended' | 'draft' | 'setup'
+  status: 'active' | 'inactive' | 'draft' | 'setup'
 }
 
 type DomainDraft = {
@@ -639,7 +639,7 @@ export default function SettingsPage() {
                       <SelectItem value="setup">setup</SelectItem>
                       <SelectItem value="draft">draft</SelectItem>
                       <SelectItem value="active">active</SelectItem>
-                      <SelectItem value="suspended">suspended</SelectItem>
+                      <SelectItem value="inactive">inactive</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

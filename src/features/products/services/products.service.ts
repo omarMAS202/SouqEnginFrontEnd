@@ -50,7 +50,12 @@ type LocalProductRecord = {
 }
 
 function createBackendProductPayload(request: CreateProductRequestDto | UpdateProductRequestDto) {
-  const categoryId = Number(request.category_id)
+  const normalizedCategoryId =
+    request.category_id !== undefined &&
+    request.category_id !== null &&
+    String(request.category_id).trim() !== ''
+      ? Number(request.category_id)
+      : null
 
   return {
     name: request.name,
@@ -59,8 +64,15 @@ function createBackendProductPayload(request: CreateProductRequestDto | UpdatePr
     price: request.price,
     stock: request.stock,
     status: request.status,
-    category: categoryId,
-    category_id: categoryId,
+    ...(normalizedCategoryId !== null
+      ? {
+          category: normalizedCategoryId,
+          category_id: normalizedCategoryId,
+        }
+      : {
+          category: null,
+          category_id: null,
+        }),
     image_url: request.image_url,
   }
 }

@@ -63,7 +63,10 @@ function normalizeBackendStore(store: {
     updated_at: store.updated_at,
     url: store.slug,
     status:
-      store.status === 'active' || store.status === 'suspended' || store.status === 'setup'
+      store.status === 'active' ||
+      store.status === 'inactive' ||
+      store.status === 'setup' ||
+      store.status === 'draft'
         ? store.status
         : 'draft',
   }
