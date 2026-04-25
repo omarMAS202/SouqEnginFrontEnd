@@ -5,9 +5,6 @@ import { usePathname } from 'next/navigation'
 import { Bell, ChevronDown, Globe, LayoutDashboard, Moon, Settings, Shield, Store, Sun, User, Users } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
-import { AuthRouteGuard } from '@/features/auth/components/AuthRouteGuard'
-import { useAuth } from '@/features/auth/hooks/useAuth'
-import { useLanguage } from '@/features/localization'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,6 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { AuthRouteGuard } from '@/features/auth/components/AuthRouteGuard'
+import { useAuth } from '@/features/auth/hooks/useAuth'
+import { useLanguage } from '@/features/localization'
 import { cn } from '@/utils/cn'
 
 const navigation = [
