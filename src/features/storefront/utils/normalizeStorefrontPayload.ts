@@ -116,6 +116,7 @@ export function normalizeStorefrontPayload(
     },
     settings: {
       ...fallbackStorefrontRuntime.settings,
+      tenantId: payload.storeProfile?.id ?? fallbackStorefrontRuntime.settings.tenantId,
       language: payload.storeProfile?.locale ?? fallbackStorefrontRuntime.settings.language,
       direction: payload.storeProfile?.direction ?? fallbackStorefrontRuntime.settings.direction,
     },

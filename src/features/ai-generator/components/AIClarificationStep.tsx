@@ -30,6 +30,13 @@ export function AIClarificationStep({
   const { direction, language } = useLanguage()
   const [answers, setAnswers] = useState<Record<string, string>>(initialAnswers)
 
+  const setAnswer = (questionId: string, value: string) => {
+    setAnswers((current) => ({
+      ...current,
+      [questionId]: value,
+    }))
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -55,17 +62,34 @@ export function AIClarificationStep({
             {questions.map((question) => (
               <div key={question.id} className="space-y-2">
                 <Label htmlFor={question.id}>{question.prompt}</Label>
+                {question.options?.length ? (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {question.options.map((option) => {
+                      const selected = answers[question.id] === option
+
+                      return (
+                        <Button
+                          key={option}
+                          type="button"
+                          variant={selected ? 'default' : 'outline'}
+                          className={cn(
+                            'h-auto min-h-11 justify-start whitespace-normal text-left',
+                            direction === 'rtl' && 'justify-end text-right',
+                          )}
+                          onClick={() => setAnswer(question.id, option)}
+                        >
+                          {option}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                ) : null}
                 <Input
                   id={question.id}
                   dir={direction}
                   value={answers[question.id] ?? ''}
                   placeholder={question.placeholder}
-                  onChange={(event) =>
-                    setAnswers((current) => ({
-                      ...current,
-                      [question.id]: event.target.value,
-                    }))
-                  }
+                  onChange={(event) => setAnswer(question.id, event.target.value)}
                 />
               </div>
             ))}

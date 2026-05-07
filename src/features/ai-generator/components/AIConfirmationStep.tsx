@@ -15,20 +15,30 @@ interface AIConfirmationStepProps {
   draft: StoreDraft
   isConfirmed: boolean
   previewApplied: boolean
+  canApplyToBackend?: boolean
+  hasUnsyncedChanges?: boolean
+  backendStatus?: StoreDraft['backendStatus']
   onBack: () => void
   onConfirm: () => void
   onApplyPreview: () => void
+  onApplyToBackend?: () => void
   isApplyingPreview?: boolean
+  isApplyingBackend?: boolean
 }
 
 export function AIConfirmationStep({
   draft,
   isConfirmed,
   previewApplied,
+  canApplyToBackend = false,
+  hasUnsyncedChanges = false,
+  backendStatus = null,
   onBack,
   onConfirm,
   onApplyPreview,
+  onApplyToBackend,
   isApplyingPreview = false,
+  isApplyingBackend = false,
 }: AIConfirmationStepProps) {
   const { direction, language } = useLanguage()
   const runtime = draft.runtime
@@ -61,6 +71,28 @@ export function AIConfirmationStep({
             {language === 'ar'
               ? 'أصبحت المسودة الآن جاهزة للإرسال إلى backend عند توفر عقد الحفظ النهائي.'
               : 'The draft is now marked as ready to be sent to the backend when the final persistence contract is available.'}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {canApplyToBackend && hasUnsyncedChanges ? (
+        <Alert>
+          <AlertTitle>{language === 'ar' ? 'تعديلات محلية غير محفوظة في الباك' : 'Local edits are not synced to the backend'}</AlertTitle>
+          <AlertDescription>
+            {language === 'ar'
+              ? 'المعاينة ستأخذ تعديلاتك المحلية، لكن تطبيق المسودة على الباك سيستخدم آخر نسخة مولدة من الباك فقط. أعد المسودة إلى حالتها الأصلية إذا أردت تطبيقها فعليًا الآن.'
+              : 'Preview reflects your local edits, but backend apply can only use the last backend-generated draft. Revert local edits if you want to apply the backend draft now.'}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {backendStatus && backendStatus !== 'draft_ready' ? (
+        <Alert>
+          <AlertTitle>{language === 'ar' ? 'المسودة ليست جاهزة في الباك' : 'Backend draft is not ready'}</AlertTitle>
+          <AlertDescription>
+            {language === 'ar'
+              ? `حالة المسودة الحالية في الباك: ${backendStatus}. أكمل التوضيحات أو أعد التوليد قبل تطبيقها على المتجر.`
+              : `Current backend status: ${backendStatus}. Complete clarifications or regenerate the draft before applying it to the store.`}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -132,6 +164,23 @@ export function AIConfirmationStep({
                     ? 'تطبيق المسودة على معاينة الواجهة'
                     : 'Apply draft to storefront preview'}
             </Button>
+
+            {canApplyToBackend && onApplyToBackend ? (
+              <Button
+                onClick={onApplyToBackend}
+                disabled={isApplyingBackend || hasUnsyncedChanges}
+                className={cn('w-full gap-2', direction === 'rtl' && 'flex-row-reverse')}
+              >
+                <Rocket className="h-4 w-4" />
+                {isApplyingBackend
+                  ? language === 'ar'
+                    ? 'جارٍ تطبيق المسودة على الباك...'
+                    : 'Applying draft to backend...'
+                  : language === 'ar'
+                    ? 'تطبيق المسودة على المتجر في الباك'
+                    : 'Apply draft to backend store'}
+              </Button>
+            ) : null}
 
             <Link href="/storefront" className="block">
               <Button variant="ghost" className={cn('w-full gap-2', direction === 'rtl' && 'flex-row-reverse')}>

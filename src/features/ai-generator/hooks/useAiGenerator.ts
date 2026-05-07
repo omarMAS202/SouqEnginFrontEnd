@@ -15,11 +15,13 @@ export function useResolveAIDraftClarificationMutation() {
   return useMutation({
     mutationFn: ({
       prompt,
+      storeId,
       clarificationAnswers,
     }: {
       prompt: string
+      storeId: string | null
       clarificationAnswers: Record<string, string>
-    }) => aiGeneratorService.resolveClarification(prompt, clarificationAnswers),
+    }) => aiGeneratorService.resolveClarification(prompt, storeId, clarificationAnswers),
   })
 }
 
@@ -31,5 +33,11 @@ export function useApplyDraftPreviewMutation() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['storefront'] })
     },
+  })
+}
+
+export function useApplyAIDraftBackendMutation() {
+  return useMutation({
+    mutationFn: (draft: StoreDraft) => aiGeneratorService.applyDraftToBackend(draft),
   })
 }

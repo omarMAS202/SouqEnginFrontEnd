@@ -17,11 +17,19 @@ export type AIDraftLifecycleStatus =
   | 'confirmed'
   | 'failed'
 
+export type AIBackendDraftWorkflowStatus =
+  | 'processing'
+  | 'needs_clarification'
+  | 'draft_ready'
+  | 'failed'
+  | 'applied'
+
 export interface AIDraftClarificationQuestion {
   id: string
   label: string
   prompt: string
   placeholder: string
+  options?: string[]
 }
 
 export type AIDraftIssueSeverity = 'error' | 'warning'
@@ -45,11 +53,15 @@ export interface StoreDraft {
   storeId: string | null
   prompt: string
   source: 'ai' | 'starter' | 'manual'
-  rawAiResponse: GeneratedStore | null
+  rawAiResponse: GeneratedStore | AIBackendDraftPayload | null
   runtime: StorefrontRuntime
   rawPayload: AiGeneratedStorefrontPayload
+  persistedPayload: AiGeneratedStorefrontPayload | null
   validation: AIDraftValidationResult
   metadata: DraftResourceMetadata & AuditMetadata
+  backendStatus?: AIBackendDraftWorkflowStatus | null
+  backendIsFallback?: boolean
+  backendReason?: string | null
 }
 
 export interface AIDraftGenerationResponse {
@@ -88,4 +100,75 @@ export interface AIDraftLifecycleState {
   errorMessage?: string
   previewApplied: boolean
   confirmedAt?: string
+}
+
+export interface AIBackendDraftPayload {
+  store: {
+    name?: string
+    description?: string
+  }
+  store_settings: {
+    currency?: string
+    language?: 'en' | 'ar' | string
+    timezone?: string
+  }
+  theme: {
+    theme_template?: string
+    primary_color?: string
+    secondary_color?: string
+    font_family?: string
+    logo_url?: string
+    banner_url?: string
+  }
+  categories: Array<{
+    name?: string
+    description?: string
+  }>
+  products: Array<{
+    name?: string
+    description?: string
+    price?: number
+    sku?: string
+    category_name?: string
+    stock_quantity?: number
+    image_url?: string
+  }>
+  clarification_needed: boolean
+  clarification_questions: Array<{
+    question_key?: string
+    question_text?: string
+    options?: string[]
+  }>
+}
+
+export interface AIBackendDraftStateResponse {
+  store_id: number
+  draft_payload: AIBackendDraftPayload
+  draft_metadata: Record<string, unknown> & {
+    status?: AIBackendDraftWorkflowStatus
+    mode?: 'clarification' | 'draft_ready'
+    request_id?: string | null
+    draft_id?: string | null
+    expires_at?: string | null
+    confirmed_at?: string | null
+    audit_id?: string | null
+    actor_id?: string | null
+    actor_type?: 'merchant' | 'admin' | 'system' | 'ai' | null
+    created_at?: string | null
+  }
+}
+
+export interface AIBackendApplyDraftResponse {
+  store_id: number
+  final_status: string
+  store_core_applied: boolean
+  categories: {
+    created: string[]
+    skipped: string[]
+  }
+  products: {
+    created: string[]
+    skipped: string[]
+  }
+  draft_cleanup_scheduled: boolean
 }

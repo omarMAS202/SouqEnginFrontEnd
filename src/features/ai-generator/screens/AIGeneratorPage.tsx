@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useLanguage } from '@/features/localization'
 import { toast } from '@/hooks/useToast'
 
@@ -12,6 +13,7 @@ import { AIInputStep } from '../components/AIInputStep'
 import { AIProcessingStep } from '../components/AIProcessingStep'
 import { AIResultsStep } from '../components/AIResultsStep'
 import {
+  useApplyAIDraftBackendMutation,
   useApplyDraftPreviewMutation,
   useRequestAIDraftMutation,
   useResolveAIDraftClarificationMutation,
@@ -36,11 +38,21 @@ function getDraftStatus(draft: StoreDraft): AIDraftLifecycleStatus {
   return draft.validation.hasBlockingIssues ? 'validation_failed' : 'needs_review'
 }
 
+function getBackendFallbackMessage(draft: StoreDraft, language: 'en' | 'ar') {
+  if (!draft.backendIsFallback) return null
+
+  return language === 'ar'
+    ? `تعذر إنشاء مسودة حقيقية من مزود الذكاء الاصطناعي. السبب من الباك: ${draft.backendReason ?? 'fallback response'}`
+    : `The backend could not generate a real AI draft. Provider reason: ${draft.backendReason ?? 'fallback response'}`
+}
+
 export default function AIGeneratorPage() {
   const { language } = useLanguage()
+  const { setCurrentStoreId } = useAuth()
   const requestDraft = useRequestAIDraftMutation()
   const resolveClarification = useResolveAIDraftClarificationMutation()
   const applyDraftPreview = useApplyDraftPreviewMutation()
+  const applyDraftBackend = useApplyAIDraftBackendMutation()
   const [lifecycle, setLifecycle] = useState<AIDraftLifecycleState>(initialLifecycleState)
 
   const handlePromptSubmit = async (prompt: string) => {
@@ -58,12 +70,24 @@ export default function AIGeneratorPage() {
 
     try {
       const response = await requestDraft.mutateAsync(prompt)
+      const fallbackMessage = response.draft ? getBackendFallbackMessage(response.draft, language) : null
+
+      if (fallbackMessage) {
+        setLifecycle((current) => ({
+          ...current,
+          status: 'fallback_required',
+          errorMessage: fallbackMessage,
+          draft: response.draft ?? null,
+        }))
+        return
+      }
 
       if (response.kind === 'clarification') {
         setLifecycle((current) => ({
           ...current,
           status: 'clarifying',
           clarificationQuestions: response.questions ?? [],
+          draft: response.draft ?? null,
         }))
         return
       }
@@ -108,8 +132,21 @@ export default function AIGeneratorPage() {
     try {
       const draft = await resolveClarification.mutateAsync({
         prompt: lifecycle.prompt,
+        storeId: lifecycle.draft?.storeId ?? null,
         clarificationAnswers: answers,
       })
+      const fallbackMessage = getBackendFallbackMessage(draft, language)
+
+      if (fallbackMessage) {
+        setLifecycle((current) => ({
+          ...current,
+          status: 'fallback_required',
+          clarificationAnswers: answers,
+          draft,
+          errorMessage: fallbackMessage,
+        }))
+        return
+      }
 
       setLifecycle((current) => ({
         ...current,
@@ -223,6 +260,28 @@ export default function AIGeneratorPage() {
     }
   }
 
+  const handleApplyBackend = async () => {
+    if (!lifecycle.draft) return
+
+    try {
+      const result = await applyDraftBackend.mutateAsync(lifecycle.draft)
+      setCurrentStoreId(String(result.store_id))
+      toast({
+        title: language === 'ar' ? 'تم تطبيق المسودة على الباك' : 'Draft applied to backend store',
+        description:
+          language === 'ar'
+            ? 'تم حفظ ناتج الذكاء الاصطناعي على المتجر في الباك وتحديث سياق المتجر الحالي.'
+            : 'The AI draft was applied to the backend store and the current store context was updated.',
+      })
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? 'تعذّر تطبيق المسودة على الباك' : 'Could not apply draft to backend',
+        description: error instanceof Error ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
   const handleBack = () => {
     if (lifecycle.status === 'clarifying') {
       setLifecycle(initialLifecycleState)
@@ -247,6 +306,9 @@ export default function AIGeneratorPage() {
       setLifecycle(initialLifecycleState)
     }
   }
+
+  const canApplyToBackend = lifecycle.draft ? aiGeneratorService.isBackendSyncedDraft(lifecycle.draft) : false
+  const hasUnsyncedChanges = lifecycle.draft ? aiGeneratorService.hasUnsyncedLocalChanges(lifecycle.draft) : false
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -310,10 +372,15 @@ export default function AIGeneratorPage() {
           draft={lifecycle.draft}
           isConfirmed={true}
           previewApplied={lifecycle.previewApplied}
+          canApplyToBackend={canApplyToBackend}
+          hasUnsyncedChanges={hasUnsyncedChanges}
+          backendStatus={lifecycle.draft.backendStatus}
           onBack={handleBack}
           onConfirm={() => void handleConfirm()}
           onApplyPreview={() => void handleApplyPreview()}
+          onApplyToBackend={() => void handleApplyBackend()}
           isApplyingPreview={applyDraftPreview.isPending}
+          isApplyingBackend={applyDraftBackend.isPending}
         />
       ) : null}
 
@@ -322,6 +389,9 @@ export default function AIGeneratorPage() {
           draft={lifecycle.draft}
           isConfirmed={false}
           previewApplied={lifecycle.previewApplied}
+          canApplyToBackend={canApplyToBackend}
+          hasUnsyncedChanges={hasUnsyncedChanges}
+          backendStatus={lifecycle.draft.backendStatus}
           onBack={() =>
             setLifecycle((current) => ({
               ...current,
@@ -330,7 +400,9 @@ export default function AIGeneratorPage() {
           }
           onConfirm={() => void handleConfirm()}
           onApplyPreview={() => void handleApplyPreview()}
+          onApplyToBackend={() => void handleApplyBackend()}
           isApplyingPreview={applyDraftPreview.isPending}
+          isApplyingBackend={applyDraftBackend.isPending}
         />
       ) : null}
     </div>

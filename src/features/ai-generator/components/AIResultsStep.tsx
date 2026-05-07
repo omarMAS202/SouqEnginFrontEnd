@@ -27,6 +27,10 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value))
 }
 
+function getTextDirection(value: string | undefined): 'ltr' | 'rtl' {
+  return /[\u0600-\u06ff]/.test(value ?? '') ? 'rtl' : 'ltr'
+}
+
 export function AIResultsStep({
   draft,
   onUpdateRuntime,
@@ -83,6 +87,7 @@ export function AIResultsStep({
               <div className="space-y-2">
                 <Label>{language === 'ar' ? 'اسم المتجر' : 'Store name'}</Label>
                 <Input
+                  dir={getTextDirection(runtime.profile.name)}
                   value={runtime.profile.name}
                   onChange={(event) =>
                     updateRuntime((current) => ({
@@ -95,6 +100,7 @@ export function AIResultsStep({
               <div className="space-y-2">
                 <Label>{language === 'ar' ? 'الشعار النصي' : 'Store slogan'}</Label>
                 <Input
+                  dir={getTextDirection(runtime.profile.slogan)}
                   value={runtime.profile.slogan}
                   onChange={(event) =>
                     updateRuntime((current) => ({
@@ -107,6 +113,7 @@ export function AIResultsStep({
               <div className="space-y-2 md:col-span-2">
                 <Label>{language === 'ar' ? 'وصف المتجر' : 'Store description'}</Label>
                 <Textarea
+                  dir={getTextDirection(runtime.profile.description)}
                   rows={4}
                   value={runtime.profile.description}
                   onChange={(event) =>
@@ -120,6 +127,7 @@ export function AIResultsStep({
               <div className="space-y-2">
                 <Label>{language === 'ar' ? 'بريد الدعم' : 'Support email'}</Label>
                 <Input
+                  dir="ltr"
                   value={runtime.profile.supportEmail}
                   onChange={(event) =>
                     updateRuntime((current) => ({
@@ -132,6 +140,7 @@ export function AIResultsStep({
               <div className="space-y-2">
                 <Label>{language === 'ar' ? 'هاتف الدعم' : 'Support phone'}</Label>
                 <Input
+                  dir="ltr"
                   value={runtime.profile.supportPhone}
                   onChange={(event) =>
                     updateRuntime((current) => ({
@@ -153,6 +162,7 @@ export function AIResultsStep({
                 <div className="space-y-2">
                   <Label>{language === 'ar' ? 'اسم الثيم' : 'Theme name'}</Label>
                   <Input
+                    dir={getTextDirection(runtime.theme.themeName)}
                     value={runtime.theme.themeName}
                     onChange={(event) =>
                       updateRuntime((current) => ({
@@ -196,6 +206,7 @@ export function AIResultsStep({
                 <div className="space-y-2">
                   <Label>{language === 'ar' ? 'عنوان الـ hero' : 'Hero title'}</Label>
                   <Input
+                    dir={getTextDirection(runtime.homePage.hero.title)}
                     value={runtime.homePage.hero.title}
                     onChange={(event) =>
                       updateRuntime((current) => ({
@@ -211,6 +222,7 @@ export function AIResultsStep({
                 <div className="space-y-2">
                   <Label>{language === 'ar' ? 'وصف الـ hero' : 'Hero subtitle'}</Label>
                   <Textarea
+                    dir={getTextDirection(runtime.homePage.hero.subtitle)}
                     rows={3}
                     value={runtime.homePage.hero.subtitle}
                     onChange={(event) =>
@@ -264,6 +276,7 @@ export function AIResultsStep({
                     <div className="space-y-2">
                       <Label>{language === 'ar' ? 'اسم الفئة' : 'Category name'}</Label>
                       <Input
+                        dir={getTextDirection(category.name)}
                         value={category.name}
                         onChange={(event) =>
                           updateRuntime((current) => ({
@@ -278,6 +291,7 @@ export function AIResultsStep({
                     <div className="space-y-2">
                       <Label>{language === 'ar' ? 'الوصف' : 'Description'}</Label>
                       <Input
+                        dir={getTextDirection(category.description)}
                         value={category.description}
                         onChange={(event) =>
                           updateRuntime((current) => ({
@@ -431,6 +445,7 @@ export function AIResultsStep({
                       <div className="space-y-2">
                         <Label>{language === 'ar' ? 'اسم المنتج' : 'Product name'}</Label>
                         <Input
+                          dir={getTextDirection(product.name)}
                           value={product.name}
                           onChange={(event) =>
                             updateRuntime((current) => ({
@@ -445,6 +460,7 @@ export function AIResultsStep({
                       <div className="space-y-2">
                         <Label>{language === 'ar' ? 'السعر' : 'Price'}</Label>
                         <Input
+                          dir="ltr"
                           type="number"
                           min="0"
                           step="0.01"
@@ -464,6 +480,7 @@ export function AIResultsStep({
                       <div className="space-y-2">
                         <Label>{language === 'ar' ? 'الفئة' : 'Category'}</Label>
                         <select
+                          dir={getTextDirection(product.categoryName)}
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                           value={product.categoryId}
                           onChange={(event) =>
@@ -510,6 +527,7 @@ export function AIResultsStep({
                     <div className="space-y-2">
                       <Label>{language === 'ar' ? 'وصف المنتج' : 'Product description'}</Label>
                       <Textarea
+                        dir={getTextDirection(product.description)}
                         rows={3}
                         value={product.description}
                         onChange={(event) =>
@@ -536,6 +554,7 @@ export function AIResultsStep({
               <div className="space-y-2">
                 <Label>{language === 'ar' ? 'عنوان قسم التواصل' : 'Footer contact title'}</Label>
                 <Input
+                  dir={getTextDirection(runtime.footer.contactTitle)}
                   value={runtime.footer.contactTitle}
                   onChange={(event) =>
                     updateRuntime((current) => ({
@@ -548,6 +567,7 @@ export function AIResultsStep({
               <div className="space-y-2">
                 <Label>{language === 'ar' ? 'نبذة الفوتر' : 'Footer about text'}</Label>
                 <Textarea
+                  dir={getTextDirection(runtime.footer.about)}
                   rows={3}
                   value={runtime.footer.about}
                   onChange={(event) =>
