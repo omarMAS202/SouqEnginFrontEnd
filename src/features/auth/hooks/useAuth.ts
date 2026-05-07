@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import type { UserRole } from '@/types/models'
 
 import { useAuthStore, userHasRole } from '../store/auth-store'
+import { resolveHomePathForUser } from '../utils/role-routing'
 
 export function useAuth() {
   const user = useAuthStore((state) => state.user)
@@ -49,7 +50,7 @@ export function useRequireAuth(roles?: UserRole[]) {
     }
 
     if (roles?.length && !userHasRole(user, roles)) {
-      router.replace(user?.role === 'super_admin' ? '/admin' : '/dashboard')
+      router.replace(resolveHomePathForUser(user))
     }
   }, [hydrated, isAuthenticated, roles, router, user])
 

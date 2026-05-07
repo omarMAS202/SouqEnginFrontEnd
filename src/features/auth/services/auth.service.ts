@@ -183,15 +183,29 @@ export const authService = {
     let accessToken = input.accessToken
 
     try {
-      const [me, storeSummaries] = await Promise.all([
-        fetchMe(accessToken),
-        fetchStores(accessToken),
-      ])
+      const me = await fetchMe(accessToken)
+      const storeSummaries =
+        me.role === 'Super Admin'
+          ? []
+          : (await fetchStores(accessToken)).map((store) => {
+              const bootstrapStore = me.stores?.find(
+                (candidate) => Number(candidate.id) === Number(store.id),
+              )
+
+              return bootstrapStore
+                ? {
+                    ...store,
+                    subdomain: bootstrapStore.subdomain ?? store.subdomain ?? null,
+                    url: bootstrapStore.slug || store.url,
+                  }
+                : store
+            })
       const stores = storeSummaries.map((store) => normalizeStoreSelectorItem(store))
 
       return {
         user: normalizeSessionUser(me, storeSummaries),
-        currentStoreId: resolveCurrentStoreId(stores, input.currentStoreId),
+        currentStoreId:
+          me.role === 'Super Admin' ? null : resolveCurrentStoreId(stores, input.currentStoreId),
         stores,
         tenantId: me.tenant_id !== null ? String(me.tenant_id) : null,
         accessToken,
@@ -203,15 +217,29 @@ export const authService = {
       }
 
       accessToken = await refreshAccessToken(input.refreshToken)
-      const [me, storeSummaries] = await Promise.all([
-        fetchMe(accessToken),
-        fetchStores(accessToken),
-      ])
+      const me = await fetchMe(accessToken)
+      const storeSummaries =
+        me.role === 'Super Admin'
+          ? []
+          : (await fetchStores(accessToken)).map((store) => {
+              const bootstrapStore = me.stores?.find(
+                (candidate) => Number(candidate.id) === Number(store.id),
+              )
+
+              return bootstrapStore
+                ? {
+                    ...store,
+                    subdomain: bootstrapStore.subdomain ?? store.subdomain ?? null,
+                    url: bootstrapStore.slug || store.url,
+                  }
+                : store
+            })
       const stores = storeSummaries.map((store) => normalizeStoreSelectorItem(store))
 
       return {
         user: normalizeSessionUser(me, storeSummaries),
-        currentStoreId: resolveCurrentStoreId(stores, input.currentStoreId),
+        currentStoreId:
+          me.role === 'Super Admin' ? null : resolveCurrentStoreId(stores, input.currentStoreId),
         stores,
         tenantId: me.tenant_id !== null ? String(me.tenant_id) : null,
         accessToken,
@@ -221,6 +249,10 @@ export const authService = {
   },
 
   async listUserStores(user: SessionUser | null, accessToken?: string | null): Promise<StoreSelectorItem[]> {
+    if (user?.role === 'super_admin') {
+      return []
+    }
+
     if (dataSourceMode !== 'backend' || !appConfig.apiBaseUrl) {
       const stores = await dataSource.auth.listUserStores(user)
       return stores.map((store) => normalizeStoreSelectorItem(normalizeStoreSummary(store)))

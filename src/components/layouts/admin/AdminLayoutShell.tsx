@@ -2,7 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, ChevronDown, Globe, LayoutDashboard, Moon, Settings, Shield, Store, Sun, User, Users } from 'lucide-react'
+import {
+  Bell,
+  ChevronDown,
+  Globe,
+  LayoutDashboard,
+  Moon,
+  Settings,
+  Shield,
+  Store,
+  Sun,
+  User,
+  Users,
+} from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { Button } from '@/components/ui/button'
@@ -85,14 +97,14 @@ export default function AdminLayoutShell({
 
           <div className="border-t border-sidebar-border p-4">
             <Link
-              href="/dashboard"
+              href="/"
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent',
                 direction === 'rtl' && 'flex-row-reverse',
               )}
             >
               <Store className="h-5 w-5" />
-              <span>{language === 'ar' ? 'الانتقال إلى المتجر' : 'Switch to Store'}</span>
+              <span>{language === 'ar' ? 'الذهاب إلى الصفحة الرئيسية' : 'Go to Home'}</span>
             </Link>
           </div>
         </aside>

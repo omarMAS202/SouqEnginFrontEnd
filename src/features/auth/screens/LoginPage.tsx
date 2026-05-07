@@ -17,6 +17,7 @@ import { cn } from '@/utils/cn'
 
 import { useAuth } from '../hooks/useAuth'
 import { type LoginFormValues, loginSchema } from '../schemas/auth.schema'
+import { resolveHomePathForUser } from '../utils/role-routing'
 
 export default function LoginPage() {
   const { t, direction, language, setLanguage } = useLanguage()
@@ -34,7 +35,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isAuthenticated || !user) return
-    router.replace(user.role === 'super_admin' ? '/admin' : '/dashboard')
+    router.replace(resolveHomePathForUser(user))
   }, [isAuthenticated, router, user])
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -47,7 +48,7 @@ export default function LoginPage() {
             ? `مرحبًا بعودتك يا ${session.user.fullName}.`
             : `Welcome back, ${session.user.fullName}.`,
       })
-      router.push(session.user.role === 'super_admin' ? '/admin' : '/dashboard')
+      router.push(resolveHomePathForUser(session.user))
     } catch (error) {
       toast({
         title: language === 'ar' ? 'تعذر تسجيل الدخول' : 'Unable to sign in',

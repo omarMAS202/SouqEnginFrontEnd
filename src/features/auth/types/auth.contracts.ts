@@ -19,6 +19,8 @@ export interface AuthLoginResponseDto extends RequestMetadata {
   user_id: number
   role: 'Store Owner' | 'Super Admin'
   tenant_id: number | null
+  stores?: AuthBootstrapStoreDto[]
+  current_store?: AuthBootstrapStoreDto | null
 }
 
 export interface AuthMeResponseDto extends RequestMetadata {
@@ -31,6 +33,8 @@ export interface AuthMeResponseDto extends RequestMetadata {
   display_name?: string | null
   created_at?: string | null
   updated_at?: string | null
+  stores?: AuthBootstrapStoreDto[]
+  current_store?: AuthBootstrapStoreDto | null
 }
 
 export interface RegisterResponseDto extends RequestMetadata {
@@ -49,6 +53,13 @@ export interface StoreSummaryDto extends StoreScopedResource {
   updated_at?: string | null
   url: string
   status?: 'active' | 'inactive' | 'draft' | 'setup' | null
+}
+
+export interface AuthBootstrapStoreDto {
+  id: number
+  name: string
+  slug: string
+  subdomain?: string | null
 }
 
 export interface StoreBootstrapResponseDto extends RequestMetadata {

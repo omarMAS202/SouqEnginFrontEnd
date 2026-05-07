@@ -17,6 +17,7 @@ import { cn } from '@/utils/cn'
 
 import { useAuth } from '../hooks/useAuth'
 import { type RegisterFormValues, registerSchema } from '../schemas/auth.schema'
+import { resolveHomePathForUser } from '../utils/role-routing'
 
 const requirements = [
   { key: 'length', label: { en: 'At least 8 characters', ar: '8 أحرف على الأقل' } },
@@ -57,7 +58,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!isAuthenticated || !user) return
-    router.replace(user.role === 'super_admin' ? '/admin' : '/dashboard')
+    router.replace(resolveHomePathForUser(user))
   }, [isAuthenticated, router, user])
 
   const passwordValue = form.watch('password')
